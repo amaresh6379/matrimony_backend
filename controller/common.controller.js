@@ -48,16 +48,26 @@ const getHeight = async (req, res) => {
 }
 
 
+const getPresignedUrl = async (req, res) => {
+  const [err, data] = await to(commonService.getPresignedUrl(req));
+  if (err) {
+    return ReE(res, Object.assign({ success: false }, { details: err.message }), 422);
+  }
+  return ReS(res, { result: data }, 200);
+}
+
 
 router.get('/district', getDistrict);
 router.get('/star', getStar);
 router.get('/zodiac', getZodiac);
 router.get('/weight', getWeight);
 router.get('/height', getHeight);
+router.post('/presignedUrl', getPresignedUrl);
 
 module.exports = {
   router,
   getDistrict,
   getStar,
-  getZodiac
+  getZodiac,
+  getPresignedUrl
 };

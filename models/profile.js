@@ -140,6 +140,9 @@ module.exports = (db, Sequelize) => {
     Profile.hasMany(models.parentDetails, { foreignKey: 'profileId' });
     Profile.hasMany(models.zodiacDetails, { foreignKey: 'profileId' });
     Profile.hasMany(models.profileImage, { foreignKey: 'profileId' });
+    Profile.hasMany(models.personalDetails, { foreignKey: 'profileId' });
+    Profile.hasMany(models.profileInterset, { foreignKey: 'profileId', as: 'SentLikes' });
+    Profile.hasMany(models.profileInterset, { foreignKey: 'likedProfileId', as: 'ReceivedLikes' });
     Profile.belongsTo(models.district, { foreignKey: 'districtId' })
   }
   return Profile;

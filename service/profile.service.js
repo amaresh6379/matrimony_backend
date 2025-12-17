@@ -6,6 +6,11 @@ const ProfileImage = require('../models').profileImage;
 const ZodiacDetails = require('../models').zodiacDetails;
 const District = require('../models').district;
 const telegramService = require('../service/telegram.service');
+const Height = require('../models').height;
+const Weight = require('../models').weight;
+const Zodiac = require('../models').zodiac;
+const Star = require('../models').star;
+const { Op, where } = require('sequelize');
 
 
 
@@ -56,8 +61,8 @@ module.exports.createProfile = createProfile;
 
 
 const createPersonalDetails = async (req) => {
-  const { heightId, weightId, skinTone, foodOption, Interest, asset } = req.body;
-  const [personalDetailsErr, personalDetailsData] = await to(PersonalDetails.create({ heightId, weightId, skinTone, foodOption, Interest, asset, profileId: req.params.id }));
+  const { heightId, weightId, skinTone, foodOption, Intereqt, asset } = req.body;
+  const [personalDetailsErr, personalDetailsData] = await to(PersonalDetails.create({ heightId, weightId, skinTone, foodOption, Intereqt, asset, profileId: req.params.id }));
   if (personalDetailsErr) {
     return TE(personalDetailsErr.message);
   }
@@ -74,7 +79,8 @@ module.exports.createPersonalDetails = createPersonalDetails;
 
 const createCareerDetails = async (req) => {
   const { educationDetails, profession, companyName, monthyIncome, workLocation } = req.body;
-  const [careerDetailsErr, careerDetailsData] = await to(CareerDetails.create({ educationDetails, profession, companyName, monthyIncome, workLocation, profileId: req.params.id }));
+  console.log({ educationDetails, profession, companyName, monthyIncome, workLocation, profileId: req.params.id });
+  const [careerDetailsErr, careerDetailsData] = await to(CareerDetails.create({ educationDetails, profession, companyName, monthyIncome, workLocation, profileId: parseInt(req.params.id) }));
   if (careerDetailsErr) {
     return TE(careerDetailsErr.message);
   }
@@ -136,3 +142,273 @@ const createProfileImage = async (req) => {
   }
 }
 module.exports.createProfileImage = createProfileImage;
+
+
+const getOneProfileDetails = async (req) => {
+  const id = req?.user?.id;
+  const gender = req?.user?.gender;
+  if (!id) return TE('Id is required');
+  const [matchErr, matachData] = await to(Profile.findOne({
+    attributes: ['matrimonyId', 'name', 'gender', 'mobileNumber', 'dob', 'martialStatus', 'religion', 'nativePlace', 'districtId'],
+    where: {
+      id: id,
+      isDeleted: false,
+      isActive: true
+    },
+    include: [
+      {
+        model: District,
+        attributes: ['districtName'],
+        required: false
+      },
+      {
+        model: CareerDetails,
+        attributes: ['educationDetails', 'profession', 'companyName', 'monthyIncome'],
+        required: false
+      },
+      {
+        model: ParentDetails,
+        attributes: ['fatherName', 'motherName', 'fatherMobileNumber', 'motherMobileNumber', 'siblingMale', 'siblingFemale', 'marriedMale', 'marriedFemale'],
+        required: false
+      },
+      {
+        model: ZodiacDetails,
+        attributes: ['id', 'patham', 'dosham', 'jathgamImage'],
+        include: [
+          {
+            model: Zodiac,
+            attributes: ['zodiacTamil'],
+            required: false
+          },
+          {
+            model: Star,
+            attributes: ['starTamil'],
+            required: false
+          }
+        ],
+        required: false
+      },
+      {
+        model: PersonalDetails,
+        attributes: ['skinTone', 'foodOption', 'Interest', 'asset'],
+        required: false,
+        include: [
+          {
+            model: Height,
+            attributes: ['heightName'],
+            required: false
+          },
+          {
+            model: Weight,
+            attributes: ['weightName'],
+            required: false
+          }
+        ]
+      },
+      {
+        model: ProfileImage,
+        attributes: ['profileUrl', 'isMain'],
+        required: false,
+        where: {
+          isDeleted: false
+        }
+      }
+    ]
+  }));
+  if (matchErr) {
+    return TE(matchErr.message);
+  }
+  return matachData;
+
+}
+
+module.exports.getOneProfileDetails = getOneProfileDetails;
+
+
+const updateProfileDetails = async (req) => {
+  if (req?.body) {
+    const updateDetails = {
+      matrimonyId: req.body.matrimonyId,
+      name: req.body.name,
+      gender: req.body.gender,
+      mobileNumber: req.body.mobileNumber,
+      dob: req.body.dob,
+      martialStatus: req.body.martialStatus,
+      religion: req.body.religion,
+      nativePlace: req.body.nativePlace,
+      districtId: req.body.districtId
+    };
+    const [updateErr, updateData] = await to(Profile.update(updateDetails, { where: { id: req.user.id, isDeleted: false, isActive: true } }));
+    if (updateErr) {
+      return TE(updateErr.message);
+    }
+    return updateData;
+  }
+}
+module.exports.updateProfileDetails = updateProfileDetails;
+
+const updateProfileImage = async (req) => {
+  if (req?.body) {
+    const updateProfileImage = {
+      profileUrl: req.body.profileUrl,
+      isMain: true
+    };
+    const [updateErr, updateData] = await to(ProfileImage.update(updateProfileImage, { where: { profileId: req.user.id } }));
+    if (updateErr) {
+      return TE(updateErr.message);
+    }
+    return updateData;
+
+  }
+}
+module.exports.updateProfileImage = updateProfileImage;
+
+
+const updateCareerDetails = async (req) => {
+  if (req?.body) {
+    const updateCareerDetails = {
+      educationDetails: req.body.educationDetails,
+      profession: req.body.profession,
+      companyName: req.body.companyName,
+      monthyIncome: req.body.monthyIncome,
+      workLocation: req.body.workLocation,
+      updatedAt: new Date()
+    };
+    const [updateErr, updateData] = await to(CareerDetails.update(updateCareerDetails, { where: { profileId: req.user.id } }));
+    if (updateErr) {
+      return TE(updateErr.message);
+    }
+    return updateData;
+  }
+
+};
+
+module.exports.updateCareerDetails = updateCareerDetails;
+
+
+const updateFamilyDetails = async (req) => {
+  if (req?.body) {
+    const updateParentDetails = {
+      fatherName: req.body.fatherName,
+      motherName: req.body.motherName,
+      fatherMobileNumber: req.body.fatherMobileNumber,
+      motherMobileNumber: req.body.motherMobileNumber,
+      siblingMale: req.body.siblingMale,
+      siblingFemale: req.body.siblingFemale,
+      marriedMale: req.body.marriedMale,
+      marriedFemale: req.body.marriedFemale,
+      updatedAt: new Date()
+    };
+    const [updateErr, updateData] = await to(ParentDetails.update(updateParentDetails, { where: { profileId: req.user.id } }));
+    if (updateErr) {
+      return TE(updateErr.message);
+    }
+    return updateData;
+  }
+
+}
+module.exports.updateFamilyDetails = updateFamilyDetails;
+
+
+const updateZodiacDetails = async (req) => {
+  if (req?.body) {
+    const updateZodiacDetails = {
+      patham: req.body.patham,
+      dosham: req.body.dosham,
+      jathgamImage: req.body.jathgamImage,
+      zodiacId: req.body.zodiacId,
+      starId: req.body.starId
+    };
+    const [updateErr, updateData] = await to(ZodiacDetails.update(updateZodiacDetails, { where: { profileId: req.user.id } }));
+    if (updateErr) {
+      return TE(updateErr.message);
+    }
+    return updateData;
+  }
+
+}
+
+module.exports.updateZodiacDetails = updateZodiacDetails;
+
+
+const updatePersonalDetails = async (req) => {
+  if (req?.body) {
+    const updatePersonalDetails = {
+      skinTone: req.body.skinTone,
+      foodOption: req.body.foodOption,
+      Interest: req.body.interest,
+      weightId: req.body.weightId,
+      heightId: req.body.heightId
+    };
+    const [updateErr, updateData] = await to(PersonalDetails.update(updatePersonalDetails, { where: { profileId: req.user.id } }));
+    if (updateErr) {
+      return TE(updateErr.message);
+    }
+    return updateData;
+  }
+};
+module.exports.updatePersonalDetails = updatePersonalDetails;
+
+
+const getProfilePercentage = async (req) => {
+  const id = req.user.id;
+  const fields = {
+    profile: ["name", "gender", "dob", "mobileNumber", "martialStatus", "religion", "nativePlace", "districtId"],
+    personalDetails: ["skinTone", "foodOption", "Interest", "asset", "heightId", "weightId"],
+    careerDetails: ["educationDetails", "profession", "companyName", "monthyIncome", "workLocation"],
+    parentsDetails: ["fatherName", "motherName", "fatherMobileNumber", "motherMobileNumber", "siblingMale", "siblingFemale", "marriedMale", "marriedFemale"],
+    zodiacDetails: ["patham", "dosham", "jathgamImage", "zodiacId", "starId"],
+    profileImage: ["profileUrl", "isMain"]
+  };
+
+  let totalFields = 0;
+  let filledFields = 0;
+
+  // Fetch all related tables
+  const [
+    profile,
+    personalDetails,
+    careerDetails,
+    parentsDetails,
+    zodiacDetails,
+    profileImage
+  ] = await Promise.all([
+    Profile.findOne({ attributes: ["name", "gender", "dob", "mobileNumber", "martialStatus", "religion", "nativePlace", "districtId"], where: { id: id, isActive: true, isDeleted: false } }),
+    PersonalDetails.findOne({ attributes: ["skinTone", "foodOption", "Interest", "asset", "heightId", "weightId"], where: { profileId: id } }),
+    CareerDetails.findOne({ attributes: ["educationDetails", "profession", "companyName", "monthyIncome", "workLocation"], where: { profileId: id } }),
+    ParentDetails.findOne({ attributes: ["fatherName", "motherName", "fatherMobileNumber", "motherMobileNumber", "siblingMale", "siblingFemale", "marriedMale", "marriedFemale"], where: { profileId: id } }),
+    ZodiacDetails.findOne({ attributes: ["patham", "dosham", "jathgamImage", "zodiacId", "starId"], where: { profileId: id } }),
+    ProfileImage.findOne({ attributes: ["profileUrl", "isMain"], where: { profileId: id } }),
+  ]);
+
+  const dataMap = {
+    profile,
+    personalDetails,
+    careerDetails,
+    parentsDetails,
+    zodiacDetails,
+    profileImage
+  };
+
+  // Count filled fields
+  for (const table in fields) {
+    const tableFields = fields[table];
+    totalFields += tableFields.length;
+
+    const row = dataMap[table];
+
+    for (const f of tableFields) {
+      if (row && row[f] !== null && row[f] !== "" && row[f] !== undefined) {
+        filledFields++;
+      }
+    }
+  }
+
+  // Calculate percentage
+  const percentage = Math.round((filledFields / totalFields) * 100);
+
+  return percentage;
+};
+
+
+module.exports.getProfilePercentage = getProfilePercentage;

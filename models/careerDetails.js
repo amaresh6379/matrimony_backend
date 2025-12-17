@@ -6,23 +6,19 @@ module.exports = (db, Sequelize) => {
       autoIncrement: true
     },
     educationDetails: {
-      type: Sequelize.ARRAY(Sequelize.STRING),
-      required: true
+      type: Sequelize.ARRAY(Sequelize.STRING)
     },
     profession: {
       type: Sequelize.STRING,
-      required: true
     },
     companyName: {
       type: Sequelize.STRING
     },
     monthyIncome: {
-      type: Sequelize.INTEGER,
-      required: true
+      type: Sequelize.INTEGER
     },
     workLocation: {
-      type: Sequelize.STRING,
-      required: true
+      type: Sequelize.STRING
     },
     created_at: {
       type: Sequelize.DATE,

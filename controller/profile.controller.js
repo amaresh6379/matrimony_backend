@@ -1,5 +1,6 @@
 const router = require('express').Router({ mergeParams: true });
 const profileService = require('../service/profile.service');
+const verifyToken = require('../middleware/verifyToken');
 require('../global_function');
 
 
@@ -55,12 +56,99 @@ const createProfileImage = async (req, res) => {
 }
 
 
+
+// Token endpoint
+
+const getOneProfileDetails = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.getOneProfileDetails(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
+
+const updateProfileDetails = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.updateProfileDetails(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
+
+const updateProfileImage = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.updateProfileImage(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
+
+
+const updateCareerDetails = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.updateCareerDetails(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
+
+const updateFamilyDetails = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.updateFamilyDetails(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
+
+const updateZodiacDetails = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.updateZodiacDetails(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
+
+const updatePersonalDetails = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.updatePersonalDetails(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
+
+const getProfilePercentage = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.getProfilePercentage(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
+
+
+
+
+
 router.post('/', createProfile);
 router.post('/:id/personal', createPersonalDetails);
 router.post('/:id/career', createCareerDetails);
 router.post('/:id/family', createFamilyDetails);
 router.post('/:id/zodiac', createZodiacDetails);
 router.post('/:id/profileImage', createProfileImage);
+
+
+
+// token endpoints
+router.get('/:id', verifyToken, getOneProfileDetails);
+router.put('/:id', verifyToken, updateProfileDetails);
+router.put('/:id/profileImage', verifyToken, updateProfileImage);
+router.put('/:id/personal', verifyToken, updatePersonalDetails);
+router.put('/:id/career', verifyToken, updateCareerDetails);
+router.put('/:id/family', verifyToken, updateFamilyDetails);
+router.put('/:id/zodiac', verifyToken, updateZodiacDetails);
+router.get('/:id/profilePercentage', verifyToken, getProfilePercentage);
+
+
+
 
 
 module.exports = {

@@ -5,12 +5,6 @@ module.exports = (db, Sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-    profileId: {
-      type: Sequelize.STRING,
-    },
-    likedProfileId: {
-      type: Sequelize.BOOLEAN
-    },
     created_at: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW
@@ -36,6 +30,10 @@ module.exports = (db, Sequelize) => {
         },
       ]
     });
+  ProfileInterset.association = (models) => {
+    ProfileInterset.belongsTo(models.profile, { foreignKey: 'profileId', as: 'Sender' });
+    ProfileInterset.belongsTo(models.profile, { foreignKey: 'likedProfileId', as: 'Receiver' });
+  }
 
   return ProfileInterset;
 }
