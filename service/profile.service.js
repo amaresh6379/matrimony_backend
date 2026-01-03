@@ -503,6 +503,7 @@ const BulkCreateProfile = async function (req) {
   console.log("profileData", profileData);
   console.log("req.params", req.params);
   console.log("req.query", req.query);
+  console.log("req.headers", req.headers);
 };
 
 module.exports.BulkCreateProfile = BulkCreateProfile;
