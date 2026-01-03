@@ -10,7 +10,11 @@ const Height = require('../models').height;
 const Weight = require('../models').weight;
 const Zodiac = require('../models').zodiac;
 const Star = require('../models').star;
+const { createCanvas, loadImage } = require("canvas");
+const fs = require("fs");
 const { Op, where } = require('sequelize');
+const puppeteer = require("puppeteer");
+const path = require("path");
 
 
 
@@ -146,7 +150,6 @@ module.exports.createProfileImage = createProfileImage;
 
 const getOneProfileDetails = async (req) => {
   const id = req?.user?.id;
-  const gender = req?.user?.gender;
   if (!id) return TE('Id is required');
   const [matchErr, matachData] = await to(Profile.findOne({
     attributes: ['matrimonyId', 'name', 'gender', 'mobileNumber', 'dob', 'martialStatus', 'religion', 'nativePlace', 'districtId'],
@@ -412,3 +415,92 @@ const getProfilePercentage = async (req) => {
 
 
 module.exports.getProfilePercentage = getProfilePercentage;
+
+async function generateProfileImage(htmlPath, data, outputPath) {
+  const browser = await puppeteer.launch({
+    headless: "new"
+  });
+
+  const page = await browser.newPage();
+
+  // Read HTML template
+  let html = fs.readFileSync(htmlPath, "utf8");
+
+  // Inject data into template
+  Object.keys(data).forEach((key) => {
+    html = html.replaceAll(`{{${key}}}`, data[key] || "");
+  });
+
+  // Load HTML
+  await page.setContent(html, { waitUntil: "networkidle0" });
+
+  // A4 size (high quality)
+  await page.setViewport({
+    width: 794,
+    height: 930,
+    deviceScaleFactor: 2
+  });
+
+  // Generate image
+  await page.screenshot({
+    path: outputPath,
+    fullPage: true
+  });
+
+  await browser.close();
+
+  return outputPath;
+}
+
+
+const downloadProfile = async (req) => {
+
+  const input = {
+    user: {
+      id: req.params.id
+    }
+  };
+
+  let [userErr, userData] = await to(getOneProfileDetails(input));
+  if (userErr) {
+    return TE(userErr.message);
+  }
+  let particularUserDetail = {};
+  console.log("userData", userData.careerDetails);
+  particularUserDetail = {
+    name: userData.name,
+    gender: userData.gender,
+    dob: userData.dob,
+    age: userData.age,
+    martialStatus: userData.martialStatus,
+    nativePlace: userData.nativePlace,
+    district: userData.district.dataValues.districtName,
+    education: userData.careerDetails,
+    profession: userData.profession,
+    company: userData.company,
+    salary: userData.salary,
+    contact: userData.mobileNumber,
+    fatherName: userData.fatherName,
+    motherName: userData.motherName,
+    raasi: userData.raasi,
+    nachathiram: userData.nachathiram,
+    assets: userData.assets,
+    expectation: userData.expectation
+  };
+
+
+  await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
+  return true;
+}
+
+module.exports.downloadProfile = downloadProfile;
+
+
+
+
+const BulkCreateProfile = async function (req) {
+  const profileData = req.body;
+  console.log("profileData", profileData);
+};
+
+module.exports.BulkCreateProfile = BulkCreateProfile;

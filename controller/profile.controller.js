@@ -125,9 +125,25 @@ const getProfilePercentage = async (req, res) => {
 }
 
 
+const downloadProfile = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.downloadProfile(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
 
 
+const BulkCreateProfile = async (req, res) => {
+  const [createErr, createSucc] = await to(profileService.BulkCreateProfile(req));
+  if (createErr) {
+    return ReE(res, Object.assign({ success: false }, { details: createErr.message }), 422);
+  }
+  return ReS(res, { result: createSucc }, 200);
+}
 
+
+router.post('/form', BulkCreateProfile)
 router.post('/', createProfile);
 router.post('/:id/personal', createPersonalDetails);
 router.post('/:id/career', createCareerDetails);
@@ -146,6 +162,7 @@ router.put('/:id/career', verifyToken, updateCareerDetails);
 router.put('/:id/family', verifyToken, updateFamilyDetails);
 router.put('/:id/zodiac', verifyToken, updateZodiacDetails);
 router.get('/:id/profilePercentage', verifyToken, getProfilePercentage);
+router.get('/:id/download', downloadProfile);
 
 
 
