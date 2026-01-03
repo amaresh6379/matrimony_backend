@@ -501,6 +501,8 @@ module.exports.downloadProfile = downloadProfile;
 const BulkCreateProfile = async function (req) {
   const profileData = req.body;
   console.log("profileData", profileData);
+  console.log("req.params", req.params);
+  console.log("req.query", req.query);
 };
 
 module.exports.BulkCreateProfile = BulkCreateProfile;
