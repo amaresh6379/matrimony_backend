@@ -1,6 +1,8 @@
 const router = require('express').Router({ mergeParams: true });
 const profileService = require('../service/profile.service');
 const verifyToken = require('../middleware/verifyToken');
+const multer = require('multer');
+const upload = multer();
 require('../global_function');
 
 
@@ -143,7 +145,7 @@ const BulkCreateProfile = async (req, res) => {
 }
 
 
-router.post('/form', BulkCreateProfile)
+router.post('/form', upload.any(), BulkCreateProfile);
 router.post('/', createProfile);
 router.post('/:id/personal', createPersonalDetails);
 router.post('/:id/career', createCareerDetails);

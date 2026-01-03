@@ -504,6 +504,7 @@ const BulkCreateProfile = async function (req) {
   console.log("req.params", req.params);
   console.log("req.query", req.query);
   console.log("req.headers", req.headers);
+  console.log("req.files", req.files);
 };
 
 module.exports.BulkCreateProfile = BulkCreateProfile;
