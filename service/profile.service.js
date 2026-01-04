@@ -118,8 +118,8 @@ module.exports.createZodiacDetails = createZodiacDetails;
 
 
 const createFamilyDetails = async (req) => {
-  const { fatherName, motherName, fatherMobileNumber, motherMobileNumber, siblingMale, siblingFemale, marriedMale, marriedFemale,contactPersonName,contactPersonNumber,contactPersonType } = req.body;
-  const [familyDetailsErr, familyDetailsData] = await to(ParentDetails.create({ fatherName, motherName, fatherMobileNumber, motherMobileNumber, siblingMale, siblingFemale, marriedMale, marriedFemale,contactPersonName,contactPersonNumber,contactPersonType, profileId: req.params.id }));
+  const { fatherName, motherName, fatherMobileNumber, motherMobileNumber, siblingMale, siblingFemale, marriedMale, marriedFemale, contactPersonName, contactPersonNumber, contactPersonType } = req.body;
+  const [familyDetailsErr, familyDetailsData] = await to(ParentDetails.create({ fatherName, motherName, fatherMobileNumber, motherMobileNumber, siblingMale, siblingFemale, marriedMale, marriedFemale, contactPersonName, contactPersonNumber, contactPersonType, profileId: req.params.id }));
   if (familyDetailsErr) {
     return TE(familyDetailsErr.message);
   }
@@ -575,6 +575,7 @@ const BulkCreateProfile = async function (req) {
   if (profileErr) {
     return TE(profileErr.message);
   }
+  console.log("profileSucc", profileSucc);
   if (profileSucc?.id) {
     const careerDetails = {
       educationDetails: answers.q38_education,
@@ -596,9 +597,9 @@ const BulkCreateProfile = async function (req) {
       siblingFemale: null,
       marriedMale: null,
       marriedFemale: null,
-      contactPersonName:answers.q73_contactPersonName,
-      contactPersonNumber:answers.q74_contactPersonNumber,
-      contactPersonType:answers.q75_contactPersonType
+      contactPersonName: answers.q53_typeA53,
+      contactPersonNumber: answers.q54_typeA54,
+      contactPersonType: answers.q55_mobileNumber
     }
     const [familyErr, familySucc] = await to(createFamilyDetails({ familyDetails, params: { id: profileSucc.id } }));
     if (familyErr) {
