@@ -512,9 +512,11 @@ const BulkCreateProfile = async function (req) {
     }
   }
   const answers = {};
+  console.log("rawData", rawData);
   for (const key in rawData) {
     if (key.startsWith('q')) {
       answers[key] = normalizeValue(rawData[key]);
+      console.log(`Processed ${key}:`, answers[key]);
     }
   }
 
@@ -568,6 +570,7 @@ const BulkCreateProfile = async function (req) {
 
 
 function normalizeValue(value) {
+  console.log("normalizeValue", value);
   if (value === null || value === undefined) return null;
 
   // Phone fields
