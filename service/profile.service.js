@@ -501,11 +501,10 @@ module.exports.downloadProfile = downloadProfile;
 
 const BulkCreateProfile = async function (req) {
   const profileData = req.body;
-  console.log("profileData", profileData.rawRequest);
   let rawData = {};
-  if (body.rawRequest) {
+  if (profileData.rawRequest) {
     try {
-      rawData = JSON.parse(body.rawRequest);
+      rawData = JSON.parse(profileData.rawRequest);
     } catch (err) {
       console.error('Invalid rawRequest JSON');
       return;
@@ -533,40 +532,36 @@ const BulkCreateProfile = async function (req) {
     nativePlace: answers.q28_typeA,
     districtId: answers.q44_districtId
   };
+  // const [profileErr, profileSucc] = await to(createProfile(profileDetails));
+  // if (profileErr) {
+  //   return TE(profileErr.message);
+  // }
+  // if (profileSucc && profileSucc.id) {
+  //   const [careerErr, careerSucc] = await to(createCareerDetails({ ...answers, params: { id: profileSucc.id } }));
+  //   if (careerErr) {
+  //     return TE(careerErr.message);
+  //   }
+  //   const [familyErr, familySucc] = await to(createFamilyDetails({ ...answers, params: { id: profileSucc.id } }));
+  //   if (familyErr) {
+  //     return TE(familyErr.message);
+  //   }
+  //   const [zodiacErr, zodiacSucc] = await to(createZodiacDetails({ ...answers, params: { id: profileSucc.id } }));
+  //   if (zodiacErr) {
+  //     return TE(zodiacErr.message);
+  //   }
+  //   const [imageErr, imageSucc] = await to(createProfileImage({ ...answers, params: { id: profileSucc.id } }));
+  //   if (imageErr) {
+  //     return TE(imageErr.message);
+  //   }
+  //   const [personalErr, personalSucc] = await to(createPersonalDetails({ ...answers, params: { id: profileSucc.id } }));
+  //   if (personalErr) {
+  //     return TE(personalErr.message);
+  //   }
+  // }
+
 
 
 }
-
-// const [profileErr, profileSucc] = await to(createProfile(answers));
-// if (profileErr) {
-//   return TE(profileErr.message);
-// }
-// if(profileSucc && profileSucc.id){
-//   const [careerErr, careerSucc] = await to(createCareerDetails({ ...answers, params: { id: profileSucc.id } }));
-//   if (careerErr) {
-//     return TE(careerErr.message);
-//   }
-//   const [familyErr, familySucc] = await to(createFamilyDetails({ ...answers, params: { id: profileSucc.id } }));
-//   if (familyErr) {
-//     return TE(familyErr.message);
-//   }
-//   const [zodiacErr, zodiacSucc] = await to(createZodiacDetails({ ...answers, params: { id: profileSucc.id } }));
-//   if (zodiacErr) {
-//     return TE(zodiacErr.message);
-//   }
-//   const [imageErr, imageSucc] = await to(createProfileImage({ ...answers, params: { id: profileSucc.id } }));
-//   if (imageErr) {
-//     return TE(imageErr.message);
-//   }
-//   const [personalErr, personalSucc] = await to(createPersonalDetails({ ...answers, params: { id: profileSucc.id } }));
-//   if (personalErr) {
-//     return TE(personalErr.message);
-//   }
-// }
-
-
-
-
 
 
 function normalizeValue(value) {
