@@ -118,8 +118,8 @@ module.exports.createZodiacDetails = createZodiacDetails;
 
 
 const createFamilyDetails = async (req) => {
-  const { fatherName, motherName, fatherMobileNumber, motherMobileNumber, siblingMale, siblingFemale, marriedMale, marriedFemale } = req.body;
-  const [familyDetailsErr, familyDetailsData] = await to(ParentDetails.create({ fatherName, motherName, fatherMobileNumber, motherMobileNumber, siblingMale, siblingFemale, marriedMale, marriedFemale, profileId: req.params.id }));
+  const { fatherName, motherName, fatherMobileNumber, motherMobileNumber, siblingMale, siblingFemale, marriedMale, marriedFemale,contactPersonName,contactPersonNumber,contactPersonType } = req.body;
+  const [familyDetailsErr, familyDetailsData] = await to(ParentDetails.create({ fatherName, motherName, fatherMobileNumber, motherMobileNumber, siblingMale, siblingFemale, marriedMale, marriedFemale,contactPersonName,contactPersonNumber,contactPersonType, profileId: req.params.id }));
   if (familyDetailsErr) {
     return TE(familyDetailsErr.message);
   }
@@ -511,15 +511,54 @@ const BulkCreateProfile = async function (req) {
     }
   }
   const answers = {};
-  console.log("rawData", rawData);
   for (const key in rawData) {
     if (key.startsWith('q')) {
       answers[key] = normalizeValue(rawData[key]);
-      console.log(`Processed ${key}:`, answers[key]);
     }
   }
 
-  console.log("answers", answers);
+  console.log("answers", JSON.stringify(answers));
+  // district fetch
+  let districtErr, districtData;
+  if (answers.q65_district) {
+    [districtErr, districtData] = await to(District.findOne({ where: { districtName: answers.q44_district } }));
+    if (districtErr) {
+      return TE(districtErr.message);
+    }
+  }
+  // star fetch
+  let starErr, starData;
+  if (answers.q48_starnbsp) {
+    [starErr, starData] = await to(Star.findOne({ where: { starTamil: answers.q48_starnbsp } }));
+    if (starErr) {
+      return TE(starErr.message);
+    }
+  }
+
+  // zodiac fetch
+  let zodiacErr, zodiacData;
+  if (answers.q47_zodiacnbsp) {
+    [zodiacErr, zodiacData] = await to(Zodiac.findOne({ where: { zodiacName: answers.q47_zodiacnbsp } }));
+    if (zodiacErr) {
+      return TE(zodiacErr.message);
+    }
+  }
+  // weight fetch
+  let weightErr, weightData;
+  if (answers.q53_weightnbsp) {
+    [weightErr, weightData] = await to(Weight.findOne({ where: { weightName: answers.q53_weightnbsp } }));
+    if (weightErr) {
+      return TE(weightErr.message);
+    }
+  }
+  // height fetch
+  let heightErr, heightData;
+  if (answers.q52_heightnbsp) {
+    [heightErr, heightData] = await to(Height.findOne({ where: { heightName: answers.q52_heightnbsp } }));
+    if (heightErr) {
+      return TE(heightErr.message);
+    }
+  }
 
   const profileDetails = {
     gender: answers.q36_gender,
@@ -530,42 +569,77 @@ const BulkCreateProfile = async function (req) {
     martialStatus: answers.q34_martialStatus,
     religion: answers.q42_religion,
     nativePlace: answers.q28_typeA,
-    districtId: answers.q44_districtId
+    districtId: districtData.id ?? null
   };
-  // const [profileErr, profileSucc] = await to(createProfile(profileDetails));
-  // if (profileErr) {
-  //   return TE(profileErr.message);
-  // }
-  // if (profileSucc && profileSucc.id) {
-  //   const [careerErr, careerSucc] = await to(createCareerDetails({ ...answers, params: { id: profileSucc.id } }));
-  //   if (careerErr) {
-  //     return TE(careerErr.message);
-  //   }
-  //   const [familyErr, familySucc] = await to(createFamilyDetails({ ...answers, params: { id: profileSucc.id } }));
-  //   if (familyErr) {
-  //     return TE(familyErr.message);
-  //   }
-  //   const [zodiacErr, zodiacSucc] = await to(createZodiacDetails({ ...answers, params: { id: profileSucc.id } }));
-  //   if (zodiacErr) {
-  //     return TE(zodiacErr.message);
-  //   }
-  //   const [imageErr, imageSucc] = await to(createProfileImage({ ...answers, params: { id: profileSucc.id } }));
-  //   if (imageErr) {
-  //     return TE(imageErr.message);
-  //   }
-  //   const [personalErr, personalSucc] = await to(createPersonalDetails({ ...answers, params: { id: profileSucc.id } }));
-  //   if (personalErr) {
-  //     return TE(personalErr.message);
-  //   }
-  // }
+  const [profileErr, profileSucc] = await to(createProfile(profileDetails));
+  if (profileErr) {
+    return TE(profileErr.message);
+  }
+  if (profileSucc?.id) {
+    const careerDetails = {
+      educationDetails: answers.q38_education,
+      profession: answers.q39_profession,
+      companyName: answers.q40_company,
+      monthyIncome: answers.q41_monthlyIncome,
+      workLocation: answers.q42_workLocation
+    }
+    const [careerErr, careerSucc] = await to(createCareerDetails({ careerDetails, params: { id: profileSucc.id } }));
+    if (careerErr) {
+      return TE(careerErr.message);
+    }
+    const familyDetails = {
+      fatherName: answers.q45_fathersName,
+      motherName: answers.q31_mothersName,
+      fatherMobileNumber: null,
+      motherMobileNumber: null,
+      siblingMale: null,
+      siblingFemale: null,
+      marriedMale: null,
+      marriedFemale: null,
+      contactPersonName:answers.q73_contactPersonName,
+      contactPersonNumber:answers.q74_contactPersonNumber,
+      contactPersonType:answers.q75_contactPersonType
+    }
+    const [familyErr, familySucc] = await to(createFamilyDetails({ familyDetails, params: { id: profileSucc.id } }));
+    if (familyErr) {
+      return TE(familyErr.message);
+    }
+    const zodiacDetails = {
+      zodiacId: zodiacData.id ?? null,
+      starId: starData.id ?? null,
+      patham: answers.q49_input49,
+      dosham: answers.q50_dosham,
+      jathgamImage: answers.q82_jathgamImage
+    };
+    const [zodiacErr, zodiacSucc] = await to(createZodiacDetails({ zodiacDetails, params: { id: profileSucc.id } }));
+    if (zodiacErr) {
+      return TE(zodiacErr.message);
+    }
+    const profileImage = {
+      profileUrl: answers.q76_profileUrl
+    }
+    const [imageErr, imageSucc] = await to(createProfileImage({ profileImage, params: { id: profileSucc.id } }));
+    if (imageErr) {
+      return TE(imageErr.message);
+    }
+    const personalDetails = {
+      heightId: heightData.id ?? null,
+      weightId: weightData.id ?? null,
+      skinTone: answers.q60_color,
+      foodOption: answers.q61_foodOption,
+      Intereqt: answers.q57_input57,
+      asset: answers.q56_input56
 
-
-
+    };
+    const [personalErr, personalSucc] = await to(createPersonalDetails({ personalDetails, params: { id: profileSucc.id } }));
+    if (personalErr) {
+      return TE(personalErr.message);
+    }
+  }
 }
 
 
 function normalizeValue(value) {
-  console.log("normalizeValue", value);
   if (value === null || value === undefined) return null;
 
   // Phone fields

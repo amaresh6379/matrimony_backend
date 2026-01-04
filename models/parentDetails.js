@@ -31,6 +31,15 @@ module.exports = (db, Sequelize) => {
     marriedFemale: {
       type: Sequelize.INTEGER
     },
+    contactPersonName:{
+      type: Sequelize.STRING
+    },
+    contactPersonNumber:{
+      type: Sequelize.STRING
+    },
+    contactPersonType:{
+      type: Sequelize.STRING
+    },
     created_at: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW
