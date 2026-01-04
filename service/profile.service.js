@@ -103,7 +103,7 @@ module.exports.createCareerDetails = createCareerDetails;
 
 const createZodiacDetails = async (req) => {
   const { zodiacId, starId, patham, dosham, jathgamImage } = req.body;
-  const [zodiacDetailsErr, zodiacDetailsData] = await to(ZodiacDetails.create({ zodiacId, starId, patham, dosham, jathgamImage, profileId: req.params.id }));
+  const [zodiacDetailsErr, zodiacDetailsData] = await to(ZodiacDetails.create({ zodiacId, starId, patham, dosham, jathgamImage, profileId: parseInt(req.params.id) }));
   if (zodiacDetailsErr) {
     return TE(zodiacDetailsErr.message);
   }
@@ -521,7 +521,7 @@ const BulkCreateProfile = async function (req) {
   // district fetch
   let districtErr, districtData;
   if (answers.q65_district) {
-    [districtErr, districtData] = await to(District.findOne({ where: { districtName: answers.q44_district } }));
+    [districtErr, districtData] = await to(District.findOne({ where: { districtName: answers.q65_district } }));
     if (districtErr) {
       return TE(districtErr.message);
     }
@@ -538,39 +538,41 @@ const BulkCreateProfile = async function (req) {
   // zodiac fetch
   let zodiacErr, zodiacData;
   if (answers.q47_zodiacnbsp) {
-    [zodiacErr, zodiacData] = await to(Zodiac.findOne({ where: { zodiacName: answers.q47_zodiacnbsp } }));
+    [zodiacErr, zodiacData] = await to(Zodiac.findOne({ where: { zodiacTamil: answers.q47_zodiacnbsp } }));
     if (zodiacErr) {
       return TE(zodiacErr.message);
     }
   }
   // weight fetch
   let weightErr, weightData;
-  if (answers.q53_weightnbsp) {
-    [weightErr, weightData] = await to(Weight.findOne({ where: { weightName: answers.q53_weightnbsp } }));
+  if (answers.q74_weight) {
+    [weightErr, weightData] = await to(Weight.findOne({ where: { weightName: answers.q74_weight } }));
     if (weightErr) {
       return TE(weightErr.message);
     }
   }
   // height fetch
   let heightErr, heightData;
-  if (answers.q52_heightnbsp) {
-    [heightErr, heightData] = await to(Height.findOne({ where: { heightName: answers.q52_heightnbsp } }));
+  if (answers.q73_height) {
+    [heightErr, heightData] = await to(Height.findOne({ where: { heightName: answers.q73_height } }));
     if (heightErr) {
       return TE(heightErr.message);
     }
   }
-
   const profileDetails = {
-    gender: answers.q36_gender,
-    name: answers.q64_name,
-    dob: answers.q25_date,
-    mobileNumber: answers.q72_mobileNumber72,
-    password: 'Admin@123',
-    martialStatus: answers.q34_martialStatus,
-    religion: answers.q42_religion,
-    nativePlace: answers.q28_typeA,
-    districtId: districtData.id ?? null
+    body: {
+      gender: answers.q36_gender.toUpperCase(),
+      name: answers.q64_name,
+      dob: answers.q25_date,
+      mobileNumber: answers.q72_mobileNumber72,
+      password: 'Admin@123',
+      martialStatus: answers.q34_martialStatus.toUpperCase(),
+      religion: answers.q42_religion,
+      nativePlace: answers.q28_typeA,
+      districtId: districtData.id ?? null
+    }
   };
+  console.log("profileDetails", profileDetails);
   const [profileErr, profileSucc] = await to(createProfile(profileDetails));
   if (profileErr) {
     return TE(profileErr.message);
@@ -578,64 +580,83 @@ const BulkCreateProfile = async function (req) {
   console.log("profileSucc", profileSucc);
   if (profileSucc?.id) {
     const careerDetails = {
-      educationDetails: answers.q38_education,
-      profession: answers.q39_profession,
-      companyName: answers.q40_company,
-      monthyIncome: answers.q41_monthlyIncome,
-      workLocation: answers.q42_workLocation
+      body: {
+        educationDetails: [answers.q38_education],
+        profession: answers.q39_profession,
+        companyName: answers.q40_company,
+        monthyIncome: answers.q41_monthlyIncome,
+        workLocation: answers.q42_workLocation
+      },
+      params: { id: JSON.stringify(profileSucc.id) }
     }
-    const [careerErr, careerSucc] = await to(createCareerDetails({ careerDetails, params: { id: profileSucc.id } }));
+    const [careerErr, careerSucc] = await to(createCareerDetails(careerDetails));
     if (careerErr) {
       return TE(careerErr.message);
     }
+    console.log("careerSucc", careerSucc);
     const familyDetails = {
-      fatherName: answers.q45_fathersName,
-      motherName: answers.q31_mothersName,
-      fatherMobileNumber: null,
-      motherMobileNumber: null,
-      siblingMale: null,
-      siblingFemale: null,
-      marriedMale: null,
-      marriedFemale: null,
-      contactPersonName: answers.q53_typeA53,
-      contactPersonNumber: answers.q54_typeA54,
-      contactPersonType: answers.q55_mobileNumber
+      body: {
+        fatherName: answers.q45_fathersName,
+        motherName: answers.q31_mothersName,
+        fatherMobileNumber: null,
+        motherMobileNumber: null,
+        siblingMale: null,
+        siblingFemale: null,
+        marriedMale: null,
+        marriedFemale: null,
+        contactPersonName: answers.q53_typeA53,
+        contactPersonNumber: answers.q54_typeA54,
+        contactPersonType: answers.q55_mobileNumber
+      },
+      params: { id: JSON.stringify(profileSucc.id) }
     }
-    const [familyErr, familySucc] = await to(createFamilyDetails({ familyDetails, params: { id: profileSucc.id } }));
+    const [familyErr, familySucc] = await to(createFamilyDetails(familyDetails));
     if (familyErr) {
       return TE(familyErr.message);
     }
+    console.log("familySucc", familySucc);
     const zodiacDetails = {
-      zodiacId: zodiacData.id ?? null,
-      starId: starData.id ?? null,
-      patham: answers.q49_input49,
-      dosham: answers.q50_dosham,
-      jathgamImage: answers.q82_jathgamImage
+      body: {
+        zodiacId: zodiacData.id ?? null,
+        starId: starData.id ?? null,
+        patham: answers.q49_input49.match(/\d+/)?.[0],
+        dosham: answers.q50_dosham,
+        jathgamImage: answers.q82_jathgamImage
+      },
+      params: { id: JSON.stringify(profileSucc.id) }
     };
-    const [zodiacErr, zodiacSucc] = await to(createZodiacDetails({ zodiacDetails, params: { id: profileSucc.id } }));
+    const [zodiacErr, zodiacSucc] = await to(createZodiacDetails(zodiacDetails));
     if (zodiacErr) {
       return TE(zodiacErr.message);
     }
+    console.log("zodiacSucc", zodiacSucc);
     const profileImage = {
-      profileUrl: answers.q76_profileUrl
+      body: {
+        profileUrl: answers.q76_profileUrl
+      },
+      params: { id: JSON.stringify(profileSucc.id) }
     }
-    const [imageErr, imageSucc] = await to(createProfileImage({ profileImage, params: { id: profileSucc.id } }));
+    const [imageErr, imageSucc] = await to(createProfileImage(profileImage));
     if (imageErr) {
       return TE(imageErr.message);
     }
+    console.log("imageSucc", imageSucc);
     const personalDetails = {
-      heightId: heightData.id ?? null,
-      weightId: weightData.id ?? null,
-      skinTone: answers.q60_color,
-      foodOption: answers.q61_foodOption,
-      Intereqt: answers.q57_input57,
-      asset: answers.q56_input56
-
+      body: {
+        heightId: heightData?.id ?? null,
+        weightId: weightData?.id ?? null,
+        skinTone: answers.q60_color,
+        foodOption: answers.q61_foodOption === 'அசைவம்' ? 'NONVEG' : (answers.q61_foodOption === 'சைவம்' ? 'VEG' : 'SOMETIMES_NONVEG'),
+        Intereqt: answers.q57_input57,
+        asset: answers.q56_input56
+      },
+      params: { id: JSON.stringify(profileSucc.id) }
     };
-    const [personalErr, personalSucc] = await to(createPersonalDetails({ personalDetails, params: { id: profileSucc.id } }));
+    const [personalErr, personalSucc] = await to(createPersonalDetails(personalDetails));
     if (personalErr) {
       return TE(personalErr.message);
     }
+    console.log("personalSucc", personalSucc);
   }
 }
 
