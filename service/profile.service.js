@@ -22,6 +22,7 @@ require('../global_function');
 
 
 const bcrypt = require('bcrypt');
+const { TE } = require('../global_function');
 const SALT = CONFIG.SALT;
 
 async function hashPasswordBcrypt(plainPassword) {
@@ -500,11 +501,90 @@ module.exports.downloadProfile = downloadProfile;
 
 const BulkCreateProfile = async function (req) {
   const profileData = req.body;
-  console.log("profileData", profileData);
-  console.log("req.params", req.params);
-  console.log("req.query", req.query);
-  console.log("req.headers", req.headers);
-  console.log("req.files", req.files);
-};
+  console.log("profileData", profileData.rawRequest);
+  let rawData = {};
+  if (body.rawRequest) {
+    try {
+      rawData = JSON.parse(body.rawRequest);
+    } catch (err) {
+      console.error('Invalid rawRequest JSON');
+      return;
+    }
+  }
+  const answers = {};
+  for (const key in rawData) {
+    if (key.startsWith('q')) {
+      answers[key] = normalizeValue(rawData[key]);
+    }
+  }
 
+  console.log("answers", answers);
+
+  const profileDetails = {
+    gender: answers.q36_gender,
+    name: answers.q64_name,
+    dob: answers.q25_date,
+    mobileNumber: answers.q72_mobileNumber72,
+    password: 'Admin@123',
+    martialStatus: answers.q34_martialStatus,
+    religion: answers.q42_religion,
+    nativePlace: answers.q28_typeA,
+    districtId: answers.q44_districtId
+  };
+
+
+}
+
+// const [profileErr, profileSucc] = await to(createProfile(answers));
+// if (profileErr) {
+//   return TE(profileErr.message);
+// }
+// if(profileSucc && profileSucc.id){
+//   const [careerErr, careerSucc] = await to(createCareerDetails({ ...answers, params: { id: profileSucc.id } }));
+//   if (careerErr) {
+//     return TE(careerErr.message);
+//   }
+//   const [familyErr, familySucc] = await to(createFamilyDetails({ ...answers, params: { id: profileSucc.id } }));
+//   if (familyErr) {
+//     return TE(familyErr.message);
+//   }
+//   const [zodiacErr, zodiacSucc] = await to(createZodiacDetails({ ...answers, params: { id: profileSucc.id } }));
+//   if (zodiacErr) {
+//     return TE(zodiacErr.message);
+//   }
+//   const [imageErr, imageSucc] = await to(createProfileImage({ ...answers, params: { id: profileSucc.id } }));
+//   if (imageErr) {
+//     return TE(imageErr.message);
+//   }
+//   const [personalErr, personalSucc] = await to(createPersonalDetails({ ...answers, params: { id: profileSucc.id } }));
+//   if (personalErr) {
+//     return TE(personalErr.message);
+//   }
+// }
+
+
+
+
+
+
+function normalizeValue(value) {
+  if (value === null || value === undefined) return null;
+
+  // Phone fields
+  if (typeof value === 'object' && value.full) {
+    return value.full;
+  }
+
+  // Date fields
+  if (typeof value === 'object' && value.day && value.month && value.year) {
+    return `${value.day}-${value.month}-${value.year}`;
+  }
+
+  // Other objects
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+
+  return value;
+}
 module.exports.BulkCreateProfile = BulkCreateProfile;
