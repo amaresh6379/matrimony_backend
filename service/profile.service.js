@@ -717,32 +717,49 @@ function normalizeValue(value) {
   return value;
 }
 
+const axios = require('axios');
+const { PutObjectCommand } = require('@aws-sdk/client-s3');
+
 async function uploadImageFromUrl(url, folder, profileId) {
   if (!url) return null;
 
-  // Download image as stream
-  const response = await axios({
-    url,
-    method: 'GET',
-    responseType: 'stream'
+  // 🔥 FORCE RAW FILE DOWNLOAD
+  const downloadUrl = `${url}?download=1`;
+
+  const response = await axios.get(downloadUrl, {
+    responseType: 'stream',
+    timeout: 20000,
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'image/*'
+    }
   });
 
-  const fileExtension = url.split('.').pop().split('?')[0];
-  const key = `${folder}/${profileId}.${fileExtension}`;
-  console.log("key", key);
+  const contentType = response.headers['content-type'];
+
+  if (!contentType || !contentType.startsWith('image/')) {
+    throw new Error(`Invalid content-type: ${contentType}`);
+  }
+
+  const extension = contentType.split('/')[1];
+  const key = `${folder}/${profileId}.${extension}`;
+
+  console.log('Uploading to S3 key:', key);
+
   const uploadParams = {
     Bucket: CONFIG.AWS_BUCKET,
     Key: key,
     Body: response.data,
-    ContentType: response.headers['content-type']
+    ContentType: contentType
   };
-  // console.log("uploadParams", uploadParams);
-  const data = await s3.send(new PutObjectCommand(uploadParams));
-  console.log("data", data);
+
+  const result = await s3.send(new PutObjectCommand(uploadParams));
+  console.log('S3 upload success:', result);
 
   return {
     key,
     url: `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`
   };
 }
+
 module.exports.BulkCreateProfile = BulkCreateProfile;
