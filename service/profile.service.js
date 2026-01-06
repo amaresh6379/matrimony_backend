@@ -736,8 +736,9 @@ async function uploadImageFromUrl(url, folder, profileId) {
     Body: response.data,
     ContentType: response.headers['content-type']
   };
-  console.log("uploadParams", uploadParams);
-  await s3.send(new PutObjectCommand(uploadParams));
+  // console.log("uploadParams", uploadParams);
+  const data = await s3.send(new PutObjectCommand(uploadParams));
+  console.log("data", data);
 
   return {
     key,
