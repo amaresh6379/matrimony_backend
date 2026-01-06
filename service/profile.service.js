@@ -41,7 +41,6 @@ const createProfile = async (req) => {
   const hashPassword = await hashPasswordBcrypt(password + SALT);
   const [profileErr, profileData] = await to(Profile.create({ name, gender, dob: new Date(dob), mobileNumber, password: hashPassword, martialStatus, religion, nativePlace, districtId }));
   if (profileErr) {
-    console.log("profileErr", profileErr);
     return TE(profileErr.message);
   }
   if (profileData) {
@@ -84,7 +83,6 @@ module.exports.createPersonalDetails = createPersonalDetails;
 
 const createCareerDetails = async (req) => {
   const { educationDetails, profession, companyName, monthyIncome, workLocation } = req.body;
-  console.log({ educationDetails, profession, companyName, monthyIncome, workLocation, profileId: req.params.id });
   const [careerDetailsErr, careerDetailsData] = await to(CareerDetails.create({ educationDetails, profession, companyName, monthyIncome, workLocation, profileId: parseInt(req.params.id) }));
   if (careerDetailsErr) {
     return TE(careerDetailsErr.message);
@@ -590,12 +588,12 @@ const BulkCreateProfile = async function (req) {
       districtId: districtData.id ?? null
     }
   };
-  console.log("profileDetails", profileDetails);
+  // console.log("profileDetails", profileDetails);
   const [profileErr, profileSucc] = await to(createProfile(profileDetails));
   if (profileErr) {
     return TE(profileErr.message);
   }
-  console.log("profileSucc", profileSucc);
+  // console.log("profileSucc", profileSucc);
   if (profileSucc?.id) {
     const careerDetails = {
       body: {
@@ -611,7 +609,7 @@ const BulkCreateProfile = async function (req) {
     if (careerErr) {
       return TE(careerErr.message);
     }
-    console.log("careerSucc", careerSucc);
+    // console.log("careerSucc", careerSucc);
     const familyDetails = {
       body: {
         fatherName: answers.q45_fathersName,
@@ -632,7 +630,7 @@ const BulkCreateProfile = async function (req) {
     if (familyErr) {
       return TE(familyErr.message);
     }
-    console.log("familySucc", familySucc);
+    // console.log("familySucc", familySucc);
     const zodiacDetails = {
       body: {
         zodiacId: zodiacData.id ?? null,
@@ -647,7 +645,7 @@ const BulkCreateProfile = async function (req) {
     if (zodiacErr) {
       return TE(zodiacErr.message);
     }
-    console.log("zodiacSucc", zodiacSucc);
+    // console.log("zodiacSucc", zodiacSucc);
     const profileImage = {
       body: {
         profileUrl: answers.q76_profileUrl
@@ -658,7 +656,7 @@ const BulkCreateProfile = async function (req) {
     if (imageErr) {
       return TE(imageErr.message);
     }
-    console.log("imageSucc", imageSucc);
+    // console.log("imageSucc", imageSucc);
     const personalDetails = {
       body: {
         heightId: heightData?.id ?? null,
@@ -674,7 +672,7 @@ const BulkCreateProfile = async function (req) {
     if (personalErr) {
       return TE(personalErr.message);
     }
-    console.log("personalSucc", personalSucc);
+    // console.log("personalSucc", personalSucc);
   }
 }
 
