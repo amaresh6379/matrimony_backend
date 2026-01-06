@@ -18,15 +18,13 @@ const axios = require('axios');
 const fs = require('fs');
 const { S3Client } = require('@aws-sdk/client-s3');
 
-
 const s3 = new S3Client({
-  region: process.env.AWS_REGION,
+  region: CONFIG.AWS_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    accessKeyId: CONFIG.AWS_ACCESS_KEY,
+    secretAccessKey: CONFIG.AWS_SECRET_KEY
   }
 });
-
 
 
 require('../global_function');
@@ -485,14 +483,12 @@ const downloadProfile = async (req) => {
     userData?.parentDetails?.[0]?.dataValues?.contactPersonNumber;
 
 
-  console.log("contactDetails", userData?.parentDetails);
 
   const readableDate = userData?.dob?.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric"
   });
-  console.log("userData.martialStatus", userData.martialStatus);
   particularUserDetail = {
     name: userData.name,
     gender: userData.gender,
@@ -528,7 +524,6 @@ module.exports.downloadProfile = downloadProfile;
 const BulkCreateProfile = async function (req) {
   const profileData = req.body;
   let rawData = {};
-  console.log("profileData", profileData);
   if (profileData.rawRequest) {
     try {
       rawData = JSON.parse(profileData.rawRequest);
@@ -644,8 +639,10 @@ const BulkCreateProfile = async function (req) {
     }
 
     let jathamImage, photo;
+    console.log("rawData?.jathamImage?.[0]", rawData?.jathamImage?.[0], "rawData?.photo?.[0]", rawData?.photo?.[0]);
     if (rawData?.jathamImage?.[0]) {
       jathamImage = await uploadImageFromUrl(rawData?.jathamImage?.[0], 'profile', profileSucc.matrimonyId)
+      console.log("jathamImage", jathamImage);
     }
     if (rawData?.photo?.[0]) {
       photo = await uploadImageFromUrl(rawData?.photo?.[0], 'profile', profileSucc.matrimonyId)
@@ -734,7 +731,7 @@ async function uploadImageFromUrl(url, folder, profileId) {
   const key = `${folder}/${profileId}.${fileExtension}`;
 
   const uploadParams = {
-    Bucket: process.env.AWS_S3_BUCKET,
+    Bucket: CONFIG.AWS_BUCKET,
     Key: key,
     Body: response.data,
     ContentType: response.headers['content-type']
@@ -744,7 +741,7 @@ async function uploadImageFromUrl(url, folder, profileId) {
 
   return {
     key,
-    url: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
+    url: `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`
   };
 }
 module.exports.BulkCreateProfile = BulkCreateProfile;
