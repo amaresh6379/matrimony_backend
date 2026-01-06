@@ -11,10 +11,21 @@ const Weight = require('../models').weight;
 const Zodiac = require('../models').zodiac;
 const Star = require('../models').star;
 const { createCanvas, loadImage } = require("canvas");
-const fs = require("fs");
 const { Op, where } = require('sequelize');
 const puppeteer = require("puppeteer");
 const path = require("path");
+const axios = require('axios');
+const fs = require('fs');
+const { S3Client } = require('@aws-sdk/client-s3');
+
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
+});
 
 
 
@@ -533,6 +544,7 @@ const BulkCreateProfile = async function (req) {
     }
   }
 
+
   // console.log("answers", JSON.stringify(answers));
   // district fetch
   let districtErr, districtData;
@@ -630,6 +642,16 @@ const BulkCreateProfile = async function (req) {
     if (familyErr) {
       return TE(familyErr.message);
     }
+
+    let jathamImage, photo;
+    if (rawData?.jathamImage?.[0]) {
+      jathamImage = await uploadImageFromUrl(rawData?.jathamImage?.[0], 'profile', profileSucc.matrimonyId)
+    }
+    if (rawData?.photo?.[0]) {
+      photo = await uploadImageFromUrl(rawData?.photo?.[0], 'profile', profileSucc.matrimonyId)
+    }
+
+
     // console.log("familySucc", familySucc);
     const zodiacDetails = {
       body: {
@@ -637,7 +659,7 @@ const BulkCreateProfile = async function (req) {
         starId: starData.id ?? null,
         patham: answers.q49_input49.match(/\d+/)?.[0],
         dosham: answers.q50_dosham,
-        jathgamImage: answers.q82_jathgamImage
+        jathgamImage: jathamImage ?? null,
       },
       params: { id: JSON.stringify(profileSucc.id) }
     };
@@ -648,7 +670,7 @@ const BulkCreateProfile = async function (req) {
     // console.log("zodiacSucc", zodiacSucc);
     const profileImage = {
       body: {
-        profileUrl: answers.q76_profileUrl
+        profileUrl: photo ?? null
       },
       params: { id: JSON.stringify(profileSucc.id) }
     }
@@ -696,5 +718,33 @@ function normalizeValue(value) {
   }
 
   return value;
+}
+
+async function uploadImageFromUrl(url, folder, profileId) {
+  if (!url) return null;
+
+  // Download image as stream
+  const response = await axios({
+    url,
+    method: 'GET',
+    responseType: 'stream'
+  });
+
+  const fileExtension = url.split('.').pop().split('?')[0];
+  const key = `${folder}/${profileId}.${fileExtension}`;
+
+  const uploadParams = {
+    Bucket: process.env.AWS_S3_BUCKET,
+    Key: key,
+    Body: response.data,
+    ContentType: response.headers['content-type']
+  };
+
+  await s3.send(new PutObjectCommand(uploadParams));
+
+  return {
+    key,
+    url: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
+  };
 }
 module.exports.BulkCreateProfile = BulkCreateProfile;
