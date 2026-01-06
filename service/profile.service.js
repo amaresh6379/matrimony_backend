@@ -639,7 +639,7 @@ const BulkCreateProfile = async function (req) {
     }
 
     let jathamImage, photo;
-    console.log("rawData?.jathamImage?.[0]", rawData?.jathamImage?.[0], "rawData?.photo?.[0]", rawData?.photo?.[0]);
+    // console.log("rawData?.jathamImage?.[0]", rawData?.jathamImage?.[0], "rawData?.photo?.[0]", rawData?.photo?.[0]);
     if (rawData?.jathamImage?.[0]) {
       jathamImage = await uploadImageFromUrl(rawData?.jathamImage?.[0], 'profile', profileSucc.matrimonyId)
       console.log("jathamImage", jathamImage);
@@ -721,7 +721,7 @@ function normalizeValue(value) {
 
 async function uploadImageFromUrl(url, folder, profileId) {
   if (!url) return null;
-
+  console.log('Downloading image from URL:', url);
   // 🔥 FORCE RAW FILE DOWNLOAD
   const downloadUrl = `${url}?download=1`;
 
