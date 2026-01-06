@@ -729,14 +729,14 @@ async function uploadImageFromUrl(url, folder, profileId) {
 
   const fileExtension = url.split('.').pop().split('?')[0];
   const key = `${folder}/${profileId}.${fileExtension}`;
-
+  console.log("key", key);
   const uploadParams = {
     Bucket: CONFIG.AWS_BUCKET,
     Key: key,
     Body: response.data,
     ContentType: response.headers['content-type']
   };
-
+  console.log("uploadParams", uploadParams);
   await s3.send(new PutObjectCommand(uploadParams));
 
   return {
