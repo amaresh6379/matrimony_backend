@@ -21,7 +21,7 @@ async function sendNewUserMessage(user) {
   nativePlace: ${user.nativePlace}
   districtName: ${user.districtName}
 `;
-  console.log("message", message);
+
   bot.sendMessage(adminChatId, message, {
     parse_mode: 'HTML',
     reply_markup: {
