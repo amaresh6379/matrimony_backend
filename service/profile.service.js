@@ -172,7 +172,7 @@ const getOneProfileDetails = async (req) => {
       },
       {
         model: ParentDetails,
-        attributes: ['fatherName', 'motherName', 'fatherMobileNumber', 'motherMobileNumber', 'siblingMale', 'siblingFemale', 'marriedMale', 'marriedFemale'],
+        attributes: ['fatherName', 'motherName', 'fatherMobileNumber', 'motherMobileNumber', 'siblingMale', 'siblingFemale', 'marriedMale', 'marriedFemale', 'contactPersonName', 'contactPersonNumber', 'contactPersonType'],
         required: false
       },
       {
@@ -467,26 +467,43 @@ const downloadProfile = async (req) => {
     return TE(userErr.message);
   }
   let particularUserDetail = {};
-  console.log("userData", userData.careerDetails);
+  const educationDetails = userData.careerDetails[0].dataValues.educationDetails.join(", ");
+  const contactDetails =
+    userData?.parentDetails?.[0]?.dataValues?.contactPersonName +
+    ' (' +
+    userData?.parentDetails?.[0]?.dataValues?.contactPersonType +
+    ')\n' +
+    userData?.parentDetails?.[0]?.dataValues?.contactPersonNumber;
+
+
+  console.log("contactDetails", userData?.parentDetails);
+
+  const readableDate = userData?.dob?.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+  console.log("userData.martialStatus", userData.martialStatus);
   particularUserDetail = {
     name: userData.name,
     gender: userData.gender,
-    dob: userData.dob,
-    age: userData.age,
-    martialStatus: userData.martialStatus,
-    nativePlace: userData.nativePlace,
-    district: userData.district.dataValues.districtName,
-    education: userData.careerDetails,
-    profession: userData.profession,
-    company: userData.company,
-    salary: userData.salary,
-    contact: userData.mobileNumber,
-    fatherName: userData.fatherName,
-    motherName: userData.motherName,
-    raasi: userData.raasi,
-    nachathiram: userData.nachathiram,
-    assets: userData.assets,
-    expectation: userData.expectation
+    dob: readableDate,
+    age: new Date().getFullYear() - new Date(userData.dob).getFullYear(),
+    maritalStatus: userData.martialStatus ?? '-',
+    religion: userData.religion ?? '-',
+    nativePlace: userData.nativePlace ?? '-',
+    district: userData?.district?.dataValues?.districtName ?? '-',
+    education: educationDetails ?? '-',
+    profession: userData?.careerDetails?.[0]?.dataValues?.profession ?? '-',
+    company: userData?.careerDetails?.[0]?.dataValues?.company ?? '-',
+    salary: userData?.careerDetails?.[0]?.dataValues?.salary ?? '-',
+    contact: contactDetails ?? '-',
+    fatherName: userData?.parentDetails?.[0]?.dataValues?.fatherName ?? '-',
+    motherName: userData?.parentDetails?.[0]?.dataValues?.motherName ?? '-',
+    raasi: userData?.zodiacDetails?.[0]?.zodiac?.dataValues?.zodiacTamil ?? '-',
+    nachathiram: userData?.zodiacDetails?.[0]?.star?.dataValues?.starTamil ?? '-',
+    assets: userData?.personalDetails?.[0]?.dataValues?.asset ?? '-',
+    expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-',
   };
 
 
@@ -502,6 +519,7 @@ module.exports.downloadProfile = downloadProfile;
 const BulkCreateProfile = async function (req) {
   const profileData = req.body;
   let rawData = {};
+  console.log("profileData", profileData);
   if (profileData.rawRequest) {
     try {
       rawData = JSON.parse(profileData.rawRequest);
@@ -517,7 +535,7 @@ const BulkCreateProfile = async function (req) {
     }
   }
 
-  console.log("answers", JSON.stringify(answers));
+  // console.log("answers", JSON.stringify(answers));
   // district fetch
   let districtErr, districtData;
   if (answers.q65_district) {
