@@ -717,8 +717,7 @@ function normalizeValue(value) {
   return value;
 }
 
-const axios = require('axios');
-const { PutObjectCommand } = require('@aws-sdk/client-s3');
+
 
 async function uploadImageFromUrl(url, folder, profileId) {
   if (!url) return null;
