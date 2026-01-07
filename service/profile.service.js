@@ -664,7 +664,6 @@ const BulkCreateProfile = async function (req) {
     if (zodiacErr) {
       return TE(zodiacErr.message);
     }
-    // console.log("zodiacSucc", zodiacSucc);
     const profileImage = {
       body: {
         profileUrl: photo ?? null
