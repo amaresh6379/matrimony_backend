@@ -724,24 +724,23 @@ async function uploadImageFromUrl(source, folder, profileId) {
   console.log('Source value:', source);
   console.log('Folder:', folder);
   console.log('Profile ID:', profileId);
+  console.log("process.env.JOTFORM_API_KEY", process.env.JOTFORM_API_KEY);
 
   if (!source) {
-    console.warn('Source is empty or null');
+    console.warn('Source is empty');
     return null;
   }
 
   let response;
   let contentType;
-  let extension;
 
   try {
     // ======================================================
-    // 🔹 CASE 1: JOTFORM temp_upload (CORRECT WAY)
+    // ✅ JOTFORM temp_upload
     // ======================================================
     if (source.includes('#jotformfs-')) {
       console.log('Detected Jotform temp_upload source');
 
-      console.log('Splitting temp_upload value...');
       const parts = source.split('#');
       console.log('Split parts:', parts);
 
@@ -749,21 +748,16 @@ async function uploadImageFromUrl(source, folder, profileId) {
       console.log('Extracted fileId:', fileId);
 
       if (!fileId) {
-        console.error('❌ FileId not found in temp_upload');
-        throw new Error('Invalid Jotform temp_upload format');
+        throw new Error('FileId missing in temp_upload');
       }
 
-      console.log('Calling Jotform File API...');
-      response = await axios.get(
-        `https://api.jotform.com/file/${fileId}`,
-        {
-          responseType: 'stream',
-          timeout: 20000,
-          headers: {
-            Authorization: `Bearer ${process.env.JOTFORM_API_KEY}`,
-          },
-        }
-      );
+      const jotformUrl = `https://api.jotform.com/file/${fileId}?apikey=${process.env.JOTFORM_API_KEY}`;
+      console.log('Calling Jotform File API URL:', jotformUrl);
+
+      response = await axios.get(jotformUrl, {
+        responseType: 'stream',
+        timeout: 20000,
+      });
 
       console.log('Jotform API status:', response.status);
       console.log('Jotform API headers:', response.headers);
@@ -773,12 +767,11 @@ async function uploadImageFromUrl(source, folder, profileId) {
     }
 
     // ======================================================
-    // 🔹 CASE 2: NORMAL PUBLIC IMAGE URL
+    // ✅ NORMAL PUBLIC IMAGE
     // ======================================================
     else {
-      console.log('Detected normal public image URL');
+      console.log('Detected public image URL');
 
-      console.log('Sending HTTP GET request to URL...');
       response = await axios.get(source, {
         responseType: 'stream',
         timeout: 20000,
@@ -788,36 +781,25 @@ async function uploadImageFromUrl(source, folder, profileId) {
         },
       });
 
-      console.log('Public URL response status:', response.status);
       console.log('Public URL headers:', response.headers);
-
       contentType = response.headers['content-type'];
-      console.log('Content-Type from public URL:', contentType);
     }
 
     // ======================================================
-    // 🔹 CONTENT TYPE VALIDATION
+    // ✅ VALIDATION
     // ======================================================
-    if (!contentType) {
-      console.error('❌ Content-Type missing');
-      throw new Error('Content-Type missing from response');
-    }
-
-    if (!contentType.startsWith('image/')) {
-      console.error('❌ Invalid content type:', contentType);
+    if (!contentType || !contentType.startsWith('image/')) {
       throw new Error(`Invalid content-type: ${contentType}`);
     }
 
-    extension = contentType.split('/')[1];
+    const extension = contentType.split('/')[1];
     console.log('Detected image extension:', extension);
 
     // ======================================================
-    // 🔹 S3 UPLOAD
+    // ✅ S3 UPLOAD
     // ======================================================
     const key = `${folder}/${profileId}.${extension}`;
-    console.log('Preparing S3 upload');
-    console.log('Bucket:', CONFIG.AWS_BUCKET);
-    console.log('Key:', key);
+    console.log('Uploading to S3 with key:', key);
 
     await s3.send(
       new PutObjectCommand({
@@ -828,31 +810,25 @@ async function uploadImageFromUrl(source, folder, profileId) {
       })
     );
 
-    console.log('✅ S3 upload successful');
-
     const finalUrl = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`;
-    console.log('Final S3 URL:', finalUrl);
-
+    console.log('✅ Upload successful:', finalUrl);
     console.log('================ END uploadImageFromSource ================');
 
-    return {
-      key,
-      url: finalUrl,
-    };
-  } catch (error) {
-    console.error('🔥 ERROR in uploadImageFromSource');
-    console.error('Message:', error.message);
-    console.error('Stack:', error.stack);
+    return { key, url: finalUrl };
+  } catch (err) {
+    console.error('🔥 uploadImageFromSource FAILED');
+    console.error('Message:', err.message);
 
-    if (error.response) {
-      console.error('HTTP Status:', error.response.status);
-      console.error('HTTP Headers:', error.response.headers);
+    if (err.response) {
+      console.error('HTTP Status:', err.response.status);
+      console.error('HTTP Body:', err.response.data);
     }
 
     console.log('================ FAILED uploadImageFromSource ================');
-    throw error;
+    throw err;
   }
 }
+
 
 
 
