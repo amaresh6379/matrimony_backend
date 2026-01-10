@@ -37,7 +37,7 @@ module.exports = (db, Sequelize) => {
       allowNull: false
     },
     religion: {
-      type: Sequelize.ENUM('HINDU', 'CHRISTIAN'),
+      type: Sequelize.ENUM('HINDU', 'CHRISTIAN', 'MUSLIM', 'OTHERS'),
       required: true
     },
     nativePlace: {

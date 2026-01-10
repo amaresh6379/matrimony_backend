@@ -490,6 +490,7 @@ const downloadProfile = async (req) => {
     month: "2-digit",
     year: "numeric"
   });
+  console.log("userData.matrimonyId", userData.matrimonyId);
   particularUserDetail = {
     name: userData.name,
     gender: userData.gender,
@@ -510,10 +511,15 @@ const downloadProfile = async (req) => {
     nachathiram: userData?.zodiacDetails?.[0]?.star?.dataValues?.starTamil ?? '-',
     assets: userData?.personalDetails?.[0]?.dataValues?.asset ?? '-',
     expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-',
+    // photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
+    jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/VCM202634.jpg`,
+    // jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/${userData.matrimonyId}.jpg`
+    photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/VCM202634.jpg`
   };
 
 
-  await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
+  const data = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
+  console.log("data", data);
   return true;
 }
 
@@ -589,10 +595,10 @@ const BulkCreateProfile = async function (req) {
       gender: answers.q36_gender.toUpperCase(),
       name: answers.q64_name,
       dob: answers.q25_date,
-      mobileNumber: answers.q72_mobileNumber72,
+      mobileNumber: answers.q72_mobileNumber72.replace(/\D/g, ""),
       password: 'Admin@123',
       martialStatus: answers.q34_martialStatus.toUpperCase(),
-      religion: answers.q42_religion,
+      religion: answers.q42_religion.toUpperCase(),
       nativePlace: answers.q28_typeA,
       districtId: districtData.id ?? null
     }
@@ -631,7 +637,7 @@ const BulkCreateProfile = async function (req) {
         marriedFemale: null,
         contactPersonName: answers.q53_typeA53,
         contactPersonNumber: answers.q54_typeA54,
-        contactPersonType: answers.q55_mobileNumber
+        contactPersonType: answers.q55_mobileNumber.replace(/\D/g, "")
       },
       params: { id: JSON.stringify(profileSucc.id) }
     }
@@ -643,11 +649,11 @@ const BulkCreateProfile = async function (req) {
     let jathamImage, photo;
     // console.log("rawData?.jathamImage?.[0]", rawData?.jathamImage?.[0], "rawData?.photo?.[0]", rawData?.photo?.[0]);
     if (rawData?.jathamImage?.[0]) {
-      jathamImage = await uploadImageFromUrl(rawData?.jathamImage?.[0], 'profile/profileimage',  profileSucc.matrimonyId)
+      jathamImage = await uploadImageFromUrl(rawData?.jathamImage?.[0], 'profile/jathagamimage', profileSucc.matrimonyId)
       console.log("jathamImage", jathamImage);
     }
     if (rawData?.photo?.[0]) {
-      photo = await uploadImageFromUrl(rawData?.photo?.[0], 'profile/jathagamimage', profileSucc.matrimonyId)
+      photo = await uploadImageFromUrl(rawData?.photo?.[0], 'profile/profileimage', profileSucc.matrimonyId)
     }
 
 
