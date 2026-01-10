@@ -642,11 +642,11 @@ const BulkCreateProfile = async function (req) {
     let jathamImage, photo;
     // console.log("rawData?.jathamImage?.[0]", rawData?.jathamImage?.[0], "rawData?.photo?.[0]", rawData?.photo?.[0]);
     if (rawData?.jathamImage?.[0]) {
-      jathamImage = await uploadImageFromUrl(rawData?.jathamImage?.[0], 'profile', profileSucc.matrimonyId)
+      jathamImage = await uploadImageFromUrl(rawData.temp_upload.q51_jathamImage[0], 'profile', profileSucc.matrimonyId)
       console.log("jathamImage", jathamImage);
     }
     if (rawData?.photo?.[0]) {
-      photo = await uploadImageFromUrl(rawData?.photo?.[0], 'profile', profileSucc.matrimonyId)
+      photo = await uploadImageFromUrl(rawData.temp_upload.q62_photo[0], 'profile', profileSucc.matrimonyId)
     }
 
 
@@ -719,14 +719,14 @@ function normalizeValue(value) {
 
 
 
-async function uploadImageFromUrl(url, folder, profileId) {
-  console.log('================ START uploadImageFromUrl ================');
-  console.log('Input URL:', url);
+async function uploadImageFromUrl(source, folder, profileId) {
+  console.log('================ START uploadImageFromSource ================');
+  console.log('Source value:', source);
   console.log('Folder:', folder);
   console.log('Profile ID:', profileId);
 
-  if (!url) {
-    console.warn('URL is null or undefined');
+  if (!source) {
+    console.warn('Source is empty or null');
     return null;
   }
 
@@ -735,23 +735,23 @@ async function uploadImageFromUrl(url, folder, profileId) {
   let extension;
 
   try {
-    // ===================== JOTFORM CASE =====================
-    if (url.includes('jotform.com/uploads')) {
-      console.log('Detected Jotform uploads URL');
+    // ======================================================
+    // 🔹 CASE 1: JOTFORM temp_upload (CORRECT WAY)
+    // ======================================================
+    if (source.includes('#jotformfs-')) {
+      console.log('Detected Jotform temp_upload source');
 
-      const decodedUrl = decodeURIComponent(url);
-      console.log('Decoded URL:', decodedUrl);
+      console.log('Splitting temp_upload value...');
+      const parts = source.split('#');
+      console.log('Split parts:', parts);
 
-      const fileIdMatch = decodedUrl.match(/#([a-f0-9-]{36})$/i);
-      console.log('fileIdMatch result:', fileIdMatch);
+      const fileId = parts[2];
+      console.log('Extracted fileId:', fileId);
 
-      if (!fileIdMatch) {
-        console.error('❌ Failed to extract fileId from Jotform URL');
-        throw new Error('Unable to extract fileId from Jotform URL');
+      if (!fileId) {
+        console.error('❌ FileId not found in temp_upload');
+        throw new Error('Invalid Jotform temp_upload format');
       }
-
-      const fileId = fileIdMatch[1];
-      console.log('✅ Extracted Jotform fileId:', fileId);
 
       console.log('Calling Jotform File API...');
       response = await axios.get(
@@ -765,32 +765,21 @@ async function uploadImageFromUrl(url, folder, profileId) {
         }
       );
 
-      console.log('Jotform API response status:', response.status);
-      console.log('Jotform API response headers:', response.headers);
+      console.log('Jotform API status:', response.status);
+      console.log('Jotform API headers:', response.headers);
 
       contentType = response.headers['content-type'];
       console.log('Content-Type from Jotform:', contentType);
-
-      if (!contentType) {
-        console.error('❌ Content-Type missing from Jotform response');
-        throw new Error('Content-Type missing from Jotform response');
-      }
-
-      if (!contentType.startsWith('image/')) {
-        console.error('❌ Not an image. Received:', contentType);
-        throw new Error(`Invalid content-type from Jotform API: ${contentType}`);
-      }
-
-      extension = contentType.split('/')[1];
-      console.log('Detected image extension:', extension);
     }
 
-    // ===================== PUBLIC URL CASE =====================
+    // ======================================================
+    // 🔹 CASE 2: NORMAL PUBLIC IMAGE URL
+    // ======================================================
     else {
       console.log('Detected normal public image URL');
 
-      console.log('Sending HTTP GET request to image URL...');
-      response = await axios.get(url, {
+      console.log('Sending HTTP GET request to URL...');
+      response = await axios.get(source, {
         responseType: 'stream',
         timeout: 20000,
         headers: {
@@ -800,31 +789,35 @@ async function uploadImageFromUrl(url, folder, profileId) {
       });
 
       console.log('Public URL response status:', response.status);
-      console.log('Public URL response headers:', response.headers);
+      console.log('Public URL headers:', response.headers);
 
       contentType = response.headers['content-type'];
       console.log('Content-Type from public URL:', contentType);
-
-      if (!contentType) {
-        console.error('❌ Content-Type missing from public URL');
-        throw new Error('Content-Type missing from public URL');
-      }
-
-      if (!contentType.startsWith('image/')) {
-        console.error('❌ Not an image. Received:', contentType);
-        throw new Error(`Invalid content-type: ${contentType}`);
-      }
-
-      extension = contentType.split('/')[1];
-      console.log('Detected image extension:', extension);
     }
 
-    // ===================== S3 UPLOAD =====================
+    // ======================================================
+    // 🔹 CONTENT TYPE VALIDATION
+    // ======================================================
+    if (!contentType) {
+      console.error('❌ Content-Type missing');
+      throw new Error('Content-Type missing from response');
+    }
+
+    if (!contentType.startsWith('image/')) {
+      console.error('❌ Invalid content type:', contentType);
+      throw new Error(`Invalid content-type: ${contentType}`);
+    }
+
+    extension = contentType.split('/')[1];
+    console.log('Detected image extension:', extension);
+
+    // ======================================================
+    // 🔹 S3 UPLOAD
+    // ======================================================
     const key = `${folder}/${profileId}.${extension}`;
-    console.log('Preparing S3 upload...');
-    console.log('S3 Bucket:', CONFIG.AWS_BUCKET);
-    console.log('S3 Key:', key);
-    console.log('S3 Region:', CONFIG.AWS_REGION);
+    console.log('Preparing S3 upload');
+    console.log('Bucket:', CONFIG.AWS_BUCKET);
+    console.log('Key:', key);
 
     await s3.send(
       new PutObjectCommand({
@@ -839,26 +832,28 @@ async function uploadImageFromUrl(url, folder, profileId) {
 
     const finalUrl = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`;
     console.log('Final S3 URL:', finalUrl);
-    console.log('================ END uploadImageFromUrl ================');
+
+    console.log('================ END uploadImageFromSource ================');
 
     return {
       key,
       url: finalUrl,
     };
   } catch (error) {
-    console.error('🔥 ERROR in uploadImageFromUrl');
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
+    console.error('🔥 ERROR in uploadImageFromSource');
+    console.error('Message:', error.message);
+    console.error('Stack:', error.stack);
 
     if (error.response) {
       console.error('HTTP Status:', error.response.status);
       console.error('HTTP Headers:', error.response.headers);
     }
 
-    console.log('================ FAILED uploadImageFromUrl ================');
+    console.log('================ FAILED uploadImageFromSource ================');
     throw error;
   }
 }
+
 
 
 module.exports.BulkCreateProfile = BulkCreateProfile;
