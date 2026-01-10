@@ -732,14 +732,17 @@ async function uploadImageFromUrl(url, folder, profileId) {
       'Accept': 'image/*'
     }
   });
+  console.log("response", response);
 
   const contentType = response.headers['content-type'];
+  console.log('Image content-type:', contentType);
 
   if (!contentType || !contentType.startsWith('image/')) {
     throw new Error(`Invalid content-type: ${contentType}`);
   }
 
   const extension = contentType.split('/')[1];
+  console.log('Image extension:', extension);
   const key = `${folder}/${profileId}.${extension}`;
 
   console.log('Uploading to S3 key:', key);
