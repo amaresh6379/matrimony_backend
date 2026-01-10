@@ -532,6 +532,7 @@ const BulkCreateProfile = async function (req) {
       return;
     }
   }
+  console.log("rawData", rawData);
   const answers = {};
   for (const key in rawData) {
     if (key.startsWith('q')) {
@@ -732,7 +733,7 @@ async function uploadImageFromUrl(url, folder, profileId) {
       'Accept': 'image/*'
     }
   });
-  console.log("response", response);
+  // console.log("response", response);
 
   const contentType = response.headers['content-type'];
   console.log('Image content-type:', contentType);
