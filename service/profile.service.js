@@ -719,7 +719,6 @@ function normalizeValue(value) {
 
 
 
-/*************  ✨ Windsurf Command ⭐  *************/
 /**
  * Uploads an image from a public URL to S3.
  *
@@ -745,18 +744,14 @@ async function uploadImageFromUrl(source, folder, profileId) {
   }
 
   let response;
-  let contentType;
+  let extension;
 
   try {
-    // ======================================================
-    // ✅ DIRECT PUBLIC IMAGE FETCH (JOTFORM / ANY URL)
-    // ======================================================
     console.log('Fetching image from public URL...');
-
     response = await axios.get(source, {
       responseType: 'stream',
       timeout: 20000,
-      maxRedirects: 5, // IMPORTANT for Jotform CDN redirects
+      maxRedirects: 5,
       headers: {
         'User-Agent': 'Mozilla/5.0',
         Accept: 'image/*',
@@ -766,21 +761,36 @@ async function uploadImageFromUrl(source, folder, profileId) {
     console.log('HTTP Status:', response.status);
     console.log('Response headers:', response.headers);
 
-    contentType = response.headers['content-type'];
-    console.log('Detected Content-Type:', contentType);
+    // ======================================================
+    // Get extension from filename in Content-Disposition
+    // ======================================================
+    const disposition = response.headers['content-disposition'];
+    console.log('Content-Disposition:', disposition);
 
-    // ======================================================
-    // ✅ VALIDATION
-    // ======================================================
-    if (!contentType || !contentType.startsWith('image/')) {
-      throw new Error(`Invalid content-type: ${contentType}`);
+    if (disposition && disposition.includes('filename=')) {
+      const matches = disposition.match(/filename="?(.+?)"?$/);
+      if (matches && matches[1]) {
+        const filename = matches[1];
+        console.log('Detected filename:', filename);
+        extension = filename.split('.').pop();
+      }
     }
 
-    const extension = contentType.split('/')[1];
-    console.log('Detected image extension:', extension);
+    // fallback to content-type
+    if (!extension) {
+      const contentType = response.headers['content-type'];
+      console.log('Fallback content-type:', contentType);
+      if (contentType && contentType.startsWith('image/')) {
+        extension = contentType.split('/')[1];
+      } else {
+        throw new Error('Cannot determine file extension');
+      }
+    }
+
+    console.log('Detected file extension:', extension);
 
     // ======================================================
-    // ✅ S3 UPLOAD
+    // Upload to S3
     // ======================================================
     const key = `${folder}/${profileId}.${extension}`;
     console.log('Uploading to S3 with key:', key);
@@ -790,12 +800,11 @@ async function uploadImageFromUrl(source, folder, profileId) {
         Bucket: CONFIG.AWS_BUCKET,
         Key: key,
         Body: response.data,
-        ContentType: contentType,
+        ContentType: response.headers['content-type'] || 'application/octet-stream',
       })
     );
 
     const finalUrl = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`;
-
     console.log('✅ Upload successful:', finalUrl);
     console.log('================ END uploadImageFromUrl ================');
 
@@ -803,16 +812,15 @@ async function uploadImageFromUrl(source, folder, profileId) {
   } catch (err) {
     console.error('🔥 uploadImageFromUrl FAILED');
     console.error('Message:', err.message);
-
     if (err.response) {
       console.error('HTTP Status:', err.response.status);
       console.error('Response headers:', err.response.headers);
     }
-
     console.log('================ FAILED uploadImageFromUrl ================');
     throw err;
   }
 }
+
 
 
 
