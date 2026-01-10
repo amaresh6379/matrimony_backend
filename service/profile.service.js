@@ -720,48 +720,145 @@ function normalizeValue(value) {
 
 
 async function uploadImageFromUrl(url, folder, profileId) {
-  if (!url) return null;
-  console.log('Downloading image from URL:', url);
-  // 🔥 FORCE RAW FILE DOWNLOAD
-  const downloadUrl = `${url}?download=1`;
+  console.log('================ START uploadImageFromUrl ================');
+  console.log('Input URL:', url);
+  console.log('Folder:', folder);
+  console.log('Profile ID:', profileId);
 
-  const response = await axios.get(downloadUrl, {
-    responseType: 'stream',
-    timeout: 20000,
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': 'image/*'
-    }
-  });
-  // console.log("response", response);
-
-  const contentType = response.headers['content-type'];
-  console.log('Image content-type:', contentType);
-
-  if (!contentType || !contentType.startsWith('image/')) {
-    throw new Error(`Invalid content-type: ${contentType}`);
+  if (!url) {
+    console.warn('URL is null or undefined');
+    return null;
   }
 
-  const extension = contentType.split('/')[1];
-  console.log('Image extension:', extension);
-  const key = `${folder}/${profileId}.${extension}`;
+  let response;
+  let contentType;
+  let extension;
 
-  console.log('Uploading to S3 key:', key);
+  try {
+    // ===================== JOTFORM CASE =====================
+    if (url.includes('jotform.com/uploads')) {
+      console.log('Detected Jotform uploads URL');
 
-  const uploadParams = {
-    Bucket: CONFIG.AWS_BUCKET,
-    Key: key,
-    Body: response.data,
-    ContentType: contentType
-  };
+      const decodedUrl = decodeURIComponent(url);
+      console.log('Decoded URL:', decodedUrl);
 
-  const result = await s3.send(new PutObjectCommand(uploadParams));
-  console.log('S3 upload success:', result);
+      const fileIdMatch = decodedUrl.match(/#([a-f0-9-]{36})$/i);
+      console.log('fileIdMatch result:', fileIdMatch);
 
-  return {
-    key,
-    url: `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`
-  };
+      if (!fileIdMatch) {
+        console.error('❌ Failed to extract fileId from Jotform URL');
+        throw new Error('Unable to extract fileId from Jotform URL');
+      }
+
+      const fileId = fileIdMatch[1];
+      console.log('✅ Extracted Jotform fileId:', fileId);
+
+      console.log('Calling Jotform File API...');
+      response = await axios.get(
+        `https://api.jotform.com/file/${fileId}`,
+        {
+          responseType: 'stream',
+          timeout: 20000,
+          headers: {
+            Authorization: `Bearer ${process.env.JOTFORM_API_KEY}`,
+          },
+        }
+      );
+
+      console.log('Jotform API response status:', response.status);
+      console.log('Jotform API response headers:', response.headers);
+
+      contentType = response.headers['content-type'];
+      console.log('Content-Type from Jotform:', contentType);
+
+      if (!contentType) {
+        console.error('❌ Content-Type missing from Jotform response');
+        throw new Error('Content-Type missing from Jotform response');
+      }
+
+      if (!contentType.startsWith('image/')) {
+        console.error('❌ Not an image. Received:', contentType);
+        throw new Error(`Invalid content-type from Jotform API: ${contentType}`);
+      }
+
+      extension = contentType.split('/')[1];
+      console.log('Detected image extension:', extension);
+    }
+
+    // ===================== PUBLIC URL CASE =====================
+    else {
+      console.log('Detected normal public image URL');
+
+      console.log('Sending HTTP GET request to image URL...');
+      response = await axios.get(url, {
+        responseType: 'stream',
+        timeout: 20000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+          Accept: 'image/*',
+        },
+      });
+
+      console.log('Public URL response status:', response.status);
+      console.log('Public URL response headers:', response.headers);
+
+      contentType = response.headers['content-type'];
+      console.log('Content-Type from public URL:', contentType);
+
+      if (!contentType) {
+        console.error('❌ Content-Type missing from public URL');
+        throw new Error('Content-Type missing from public URL');
+      }
+
+      if (!contentType.startsWith('image/')) {
+        console.error('❌ Not an image. Received:', contentType);
+        throw new Error(`Invalid content-type: ${contentType}`);
+      }
+
+      extension = contentType.split('/')[1];
+      console.log('Detected image extension:', extension);
+    }
+
+    // ===================== S3 UPLOAD =====================
+    const key = `${folder}/${profileId}.${extension}`;
+    console.log('Preparing S3 upload...');
+    console.log('S3 Bucket:', CONFIG.AWS_BUCKET);
+    console.log('S3 Key:', key);
+    console.log('S3 Region:', CONFIG.AWS_REGION);
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: CONFIG.AWS_BUCKET,
+        Key: key,
+        Body: response.data,
+        ContentType: contentType,
+      })
+    );
+
+    console.log('✅ S3 upload successful');
+
+    const finalUrl = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`;
+    console.log('Final S3 URL:', finalUrl);
+    console.log('================ END uploadImageFromUrl ================');
+
+    return {
+      key,
+      url: finalUrl,
+    };
+  } catch (error) {
+    console.error('🔥 ERROR in uploadImageFromUrl');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+
+    if (error.response) {
+      console.error('HTTP Status:', error.response.status);
+      console.error('HTTP Headers:', error.response.headers);
+    }
+
+    console.log('================ FAILED uploadImageFromUrl ================');
+    throw error;
+  }
 }
+
 
 module.exports.BulkCreateProfile = BulkCreateProfile;
