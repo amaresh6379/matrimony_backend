@@ -731,7 +731,8 @@ function normalizeValue(value) {
  * @throws {Error} - If the content-type of the image is invalid or if the upload to S3 fails.
  */
 
-/*******  4df65119-1e31-4fce-b462-2b2bb8cfb529  *******/
+
+
 async function uploadImageFromUrl(source, folder, profileId) {
   console.log('================ START uploadImageFromUrl ================');
   console.log('Source URL:', source);
@@ -749,7 +750,7 @@ async function uploadImageFromUrl(source, folder, profileId) {
   try {
     console.log('Fetching image from public URL...');
     response = await axios.get(source, {
-      responseType: 'stream',
+      responseType: 'arraybuffer', // <-- consume full response as buffer
       timeout: 20000,
       maxRedirects: 5,
       headers: {
@@ -762,7 +763,7 @@ async function uploadImageFromUrl(source, folder, profileId) {
     console.log('Response headers:', response.headers);
 
     // ======================================================
-    // Get extension from filename in Content-Disposition
+    // Get extension from Content-Disposition or fallback
     // ======================================================
     const disposition = response.headers['content-disposition'];
     console.log('Content-Disposition:', disposition);
@@ -776,7 +777,6 @@ async function uploadImageFromUrl(source, folder, profileId) {
       }
     }
 
-    // fallback to content-type
     if (!extension) {
       const contentType = response.headers['content-type'];
       console.log('Fallback content-type:', contentType);
@@ -795,14 +795,24 @@ async function uploadImageFromUrl(source, folder, profileId) {
     const key = `${folder}/${profileId}.${extension}`;
     console.log('Uploading to S3 with key:', key);
 
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: CONFIG.AWS_BUCKET,
-        Key: key,
-        Body: response.data,
-        ContentType: response.headers['content-type'] || 'application/octet-stream',
-      })
-    );
+    const uploadParams = {
+      Bucket: CONFIG.AWS_BUCKET,
+      Key: key,
+      Body: Buffer.from(response.data), // <-- full buffer
+      ContentType: response.headers['content-type'] || 'application/octet-stream',
+    };
+
+    try {
+      const s3Result = await s3.send(new PutObjectCommand(uploadParams));
+      console.log('✅ S3 Upload Success:', s3Result);
+    } catch (s3Err) {
+      console.error('🔥 S3 upload failed');
+      console.error('Message:', s3Err.message);
+      console.error('Code:', s3Err.code);
+      console.error('HTTP Status:', s3Err.$metadata?.httpStatusCode);
+      console.error('Request ID:', s3Err.$metadata?.requestId);
+      throw s3Err;
+    }
 
     const finalUrl = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`;
     console.log('✅ Upload successful:', finalUrl);
@@ -820,6 +830,7 @@ async function uploadImageFromUrl(source, folder, profileId) {
     throw err;
   }
 }
+
 
 
 
