@@ -643,11 +643,11 @@ const BulkCreateProfile = async function (req) {
     let jathamImage, photo;
     // console.log("rawData?.jathamImage?.[0]", rawData?.jathamImage?.[0], "rawData?.photo?.[0]", rawData?.photo?.[0]);
     if (rawData?.jathamImage?.[0]) {
-      jathamImage = await uploadImageFromUrl(rawData?.jathamImage?.[0], 'profile', profileSucc.matrimonyId)
+      jathamImage = await uploadImageFromUrl(rawData?.jathamImage?.[0], 'profile', 'jathamImage' +  profileSucc.matrimonyId)
       console.log("jathamImage", jathamImage);
     }
     if (rawData?.photo?.[0]) {
-      photo = await uploadImageFromUrl(rawData?.photo?.[0], 'profile', profileSucc.matrimonyId)
+      photo = await uploadImageFromUrl(rawData?.photo?.[0], 'profile', 'photo' + profileSucc.matrimonyId)
     }
 
 
