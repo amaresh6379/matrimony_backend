@@ -16,8 +16,8 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const axios = require('axios');
 const fs = require('fs');
-const { S3Client } = require('@aws-sdk/client-s3');
-const PutObjectCommand = require('@aws-sdk/client-s3')
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
 
 const s3 = new S3Client({
   region: CONFIG.AWS_REGION,
