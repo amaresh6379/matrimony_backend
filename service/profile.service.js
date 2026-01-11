@@ -111,6 +111,7 @@ module.exports.createCareerDetails = createCareerDetails;
 
 const createZodiacDetails = async (req) => {
   const { zodiacId, starId, patham, dosham, jathgamImage } = req.body;
+  console.log("jathagam body", req.body);
   const [zodiacDetailsErr, zodiacDetailsData] = await to(ZodiacDetails.create({ zodiacId, starId, patham, dosham, jathgamImage, profileId: parseInt(req.params.id) }));
   if (zodiacDetailsErr) {
     return TE(zodiacDetailsErr.message);
@@ -568,8 +569,8 @@ const downloadProfile = async (req) => {
       district: userData?.district?.dataValues?.districtName ?? '-',
       education: educationDetails ?? '-',
       profession: userData?.careerDetails?.[0]?.dataValues?.profession ?? '-',
-      company: userData?.careerDetails?.[0]?.dataValues?.company ?? '-',
-      salary: userData?.careerDetails?.[0]?.dataValues?.salary ?? '-',
+      company: userData?.careerDetails?.[0]?.dataValues?.companyName ?? '-',
+      salary: userData?.careerDetails?.[0]?.dataValues?.monthyIncome ?? '-',
       contact: contactDetails ?? '-',
       fatherName: userData?.parentDetails?.[0]?.dataValues?.fatherName ?? '-',
       motherName: userData?.parentDetails?.[0]?.dataValues?.motherName ?? '-',
@@ -801,7 +802,7 @@ const BulkCreateProfile = async function (req) {
 
   console.log('[BulkCreateProfile] Creating Zodiac & Personal Details');
 
-  const [zodiacDetailsErr] = await to(createZodiacDetails({
+  const [zodiacDetailsErr, zodiacDetailsData] = await to(createZodiacDetails({
     body: {
       zodiacId: zodiacData?.id ?? null,
       starId: starData?.id ?? null,
@@ -817,6 +818,8 @@ const BulkCreateProfile = async function (req) {
     return TE(zodiacDetailsErr.message);
   }
 
+  console.log('[BulkCreateProfile] Zodiac created');
+
   const [createProfileImageErr] = await to(createProfileImage({
     body: { profileUrl: photo ?? null },
     params: { id: JSON.stringify(profileSucc.id) }
@@ -827,6 +830,7 @@ const BulkCreateProfile = async function (req) {
     return TE(createProfileImageErr.message);
   }
 
+  console.log('[BulkCreateProfile] Profile Image created');
   const [createPersonalDetailsErr] = await to(createPersonalDetails({
     body: {
       heightId: heightData?.id ?? null,
