@@ -693,7 +693,7 @@ const BulkCreateProfile = async function (req) {
       mobileNumber: answers.q72_mobileNumber72?.replace(/\D/g, ''),
       password: 'Admin@123',
       martialStatus: answers.q34_martialStatus?.toUpperCase(),
-      religion: answers.q42_religion?.toUpperCase(),
+      religion: answers.q78_religion?.toUpperCase(),
       nativePlace: answers.q28_typeA,
       districtId: districtData?.id ?? null
     }
