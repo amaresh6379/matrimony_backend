@@ -76,6 +76,7 @@ module.exports.createProfile = createProfile;
 
 const createPersonalDetails = async (req) => {
   const { heightId, weightId, skinTone, foodOption, Interest, asset } = req.body;
+  console.log("Personal data", req.body);
   const [personalDetailsErr, personalDetailsData] = await to(PersonalDetails.create({ heightId, weightId, skinTone, foodOption, Interest: Interest, asset, profileId: req.params.id }));
   if (personalDetailsErr) {
     return TE(personalDetailsErr.message);
@@ -177,7 +178,7 @@ const getOneProfileDetails = async (req) => {
       },
       {
         model: CareerDetails,
-        attributes: ['educationDetails', 'profession', 'companyName', 'monthyIncome'],
+        attributes: ['educationDetails', 'profession', 'companyName', 'monthyIncome', 'workLocation'],
         required: false
       },
       {
@@ -853,7 +854,7 @@ const BulkCreateProfile = async function (req) {
   }
 
   console.log('[BulkCreateProfile] Profile Image created');
-  console.log("")
+  console.log("Interset", answers.q57_input57);
   const [createPersonalDetailsErr] = await to(createPersonalDetails({
     body: {
       heightId: heightData?.id ?? null,
