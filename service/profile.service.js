@@ -623,11 +623,12 @@ const downloadProfile = async (req) => {
 module.exports.downloadProfile = downloadProfile;
 
 
-function parseDOB_MMDDYYYY(dateStr) {
-  console.log("dateStr", dateStr);
-  const [month, day, year] = dateStr.split('-');
+function parseDOB_DDMMYYYY(dateStr) {
+  const [day, month, year] = dateStr.split('-').map(Number);
+  console.log('day, month, year', day, month, year);
   return new Date(Date.UTC(year, month - 1, day));
 }
+
 
 
 const BulkCreateProfile = async function (req) {
@@ -720,7 +721,7 @@ const BulkCreateProfile = async function (req) {
     body: {
       gender: answers.q36_gender?.toUpperCase(),
       name: answers.q64_name,
-      dob: parseDOB_MMDDYYYY(answers.q25_date),
+      dob: parseDOB_DDMMYYYY(answers.q25_date),
       mobileNumber: answers.q72_mobileNumber72?.replace(/\D/g, ''),
       password: 'Admin@123',
       martialStatus: answers.q34_martialStatus?.toUpperCase(),
