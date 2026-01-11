@@ -519,12 +519,14 @@ const downloadProfile = async (req) => {
         id: req.params.id
       }
     };
+    c
     let [userErr, userData] = await to(getOneProfileDetails(input));
     if (userErr) {
       return TE(userErr.message);
     }
+    console.log("userData", userData);
     let particularUserDetail = {};
-    const educationDetails = userData.careerDetails[0].dataValues.educationDetails.join(", ");
+    const educationDetails = userData?.careerDetails[0]?.dataValues?.educationDetails?.join(", ");
     const contactDetails =
       userData?.parentDetails?.[0]?.dataValues?.contactPersonName +
       ' (' +
