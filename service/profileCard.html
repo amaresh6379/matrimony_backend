@@ -72,10 +72,21 @@
       display: grid;
       grid-template-columns: 140px 10px auto;
       margin-bottom: 10px;
+      align-items: center;
+      /* 🔥 THIS fixes Tamil alignment */
     }
+
 
     .label {
       font-weight: bold;
+    }
+
+    .value {
+      line-height: 1.2;
+    }
+
+    .tamil {
+      line-height: 1.1;
     }
 
     /* PHOTO */
@@ -320,27 +331,27 @@
         <div class="row">
           <div class="label">Raasi</div>
           <div>:</div>
-          <div>{{raasi}}</div>
+          <div class="value tamil">{{raasi}}</div>
         </div>
         <div class="row">
           <div class="label">Nachathiram</div>
           <div>:</div>
-          <div>{{nachathiram}}</div>
+          <div class="value tamil">{{nachathiram}}</div>
         </div>
         <div class="row">
           <div class="label">Paatham</div>
           <div>:</div>
-          <div>{{paatham}}</div>
+          <div class="value tamil">{{paatham}}</div>
         </div>
         <div class="row">
           <div class="label">Dosham</div>
           <div>:</div>
-          <div>{{dosham}}</div>
+          <div class="value tamil">{{dosham}}</div>
         </div>
         <div class="row">
           <div class="label">Assets</div>
           <div>:</div>
-          <div>{{assets}}</div>
+          <div class="value tamil">{{assets}}</div>
         </div>
         <div class="row">
           <div class="label">Expectation</div>
