@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Vaniyar Chettiyar Kalyana Malai</title>
+
+
+  <style>
+    body {
+      margin: 0;
+      background: #f5f5f5;
+      font-family: "Times New Roman", serif;
+    }
+
+    .page {
+      width: 210mm;
+      height: 265mm;
+      background: #fff;
+      margin: auto;
+      padding: 8mm 20mm 20mm 20mm;
+      border: 2px solid #000;
+      box-sizing: border-box;
+    }
+
+    /* HEADER */
+    .title {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .sub-title {
+      text-align: center;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .sub-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .address {
+      font-weight: bold;
+    }
+
+
+    .contact {
+      font-weight: bold;
+      font-size: 16px;
+      padding: 0px 4px;
+      border-radius: 4px;
+    }
+
+    /* CONTENT */
+    .content {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .left-details,
+    .right-column {
+      width: 45%;
+      font-size: 16px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 140px 10px auto;
+      margin-bottom: 10px;
+    }
+
+    .label {
+      font-weight: bold;
+    }
+
+    /* PHOTO */
+    .photo-box {
+      width: 192px;
+      height: 170px;
+      margin-left: 30px;
+      margin-top: -14px;
+      margin-bottom: 27px;
+      border: 1px solid #000;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      /* 🔥 important */
+    }
+
+    .photo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* fills box without distortion */
+    }
+
+
+    /* HOROSCOPE */
+    .jathagam-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+    }
+
+
+
+    .jathagam-title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .jathagam-placeholder {
+      height: 240px;
+      border: 2px dashed #000;
+    }
+
+    /* FOOTER */
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .header-separator {
+      margin-top: 1px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #000;
+    }
+
+    /* HOROSCOPE SECTION */
+    .jathagam-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+    }
+
+    .jathagam-box {
+      width: 50%;
+      /* border: 2px solid #000; */
+      padding: 10px;
+      /* box-sizing: border-box; */
+    }
+
+    .jathagam-image-box {
+      width: 100%;
+      height: 290px;
+      border: 1px solid gray;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .jathagam-image-box img {
+      max-width: 100%;
+      max-height: 95%;
+      object-fit: contain;
+    }
+
+
+    .jathagam-title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    /* SOUTH INDIAN HOROSCOPE GRID */
+    .horoscope-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 60px);
+      border: 2px solid #000;
+    }
+
+    .house {
+      border: 1px solid #000;
+      font-size: 12px;
+      text-align: center;
+      padding: 4px;
+      line-height: 1.2;
+    }
+
+    /* Center box (empty) */
+    .house.center {
+      grid-column: 2 / span 2;
+      grid-row: 2 / span 2;
+      border: none;
+    }
+
+    .contact-details {
+      font-weight: 400;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <div class="header">
+      <div class="title">Vaniyar Chettiyar Kalyana Malai</div>
+      <div class="sub-title">(வன்னியர் செட்டியார் கல்யாண மலை)</div>
+      <div class="sub-header">
+        <div class="address">
+          Vaniyar Sangam, Kovilpatti,<br>
+          Thoothukudi District - 628501
+        </div>
+        <div class="contact">
+          <div class="contact-label">Contact Number :</div>
+          <div class="contact-details">8903960261, 9843011386</div>
+        </div>
+      </div>
+
+      <div class="header-separator"></div>
+    </div>
+
+
+    <div class="content">
+      <!-- LEFT -->
+      <div class="left-details">
+        <div class="row">
+          <div class="label">Name</div>
+          <div>:</div>
+          <div>{{name}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Gender</div>
+          <div>:</div>
+          <div>{{gender}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Date of Birth</div>
+          <div>:</div>
+          <div>{{dob}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Age</div>
+          <div>:</div>
+          <div>{{age}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Religion</div>
+          <div>:</div>
+          <div>{{religion}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Marital Status</div>
+          <div>:</div>
+          <div>{{maritalStatus}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Native Place</div>
+          <div>:</div>
+          <div>{{nativePlace}}</div>
+        </div>
+        <div class="row">
+          <div class="label">District</div>
+          <div>:</div>
+          <div>{{district}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Education</div>
+          <div>:</div>
+          <div>{{education}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Profession</div>
+          <div>:</div>
+          <div>{{profession}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Company Name</div>
+          <div>:</div>
+          <div>{{company}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Salary</div>
+          <div>:</div>
+          <div>{{salary}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Contact Details</div>
+          <div>:</div>
+          <div>{{contact}}</div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right-column">
+        <div class="photo-box">
+          <img src="{{photoUrl}}" alt="Profile Photo" class="photo-img" />
+        </div>
+
+
+
+        <div class="row">
+          <div class="label">Father’s Name</div>
+          <div>:</div>
+          <div>{{fatherName}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Mother’s Name</div>
+          <div>:</div>
+          <div>{{motherName}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Raasi</div>
+          <div>:</div>
+          <div>{{raasi}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Nachathiram</div>
+          <div>:</div>
+          <div>{{nachathiram}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Assets</div>
+          <div>:</div>
+          <div>{{assets}}</div>
+        </div>
+        <div class="row">
+          <div class="label">Expectation</div>
+          <div>:</div>
+          <div>{{expectation}}</div>
+        </div>
+
+      </div>
+    </div>
+    <div class="jathagam-section">
+      <div class="jathagam-box" style="width: 100%;">
+        <div class="jathagam-title">Rasi and Amsam Chart</div>
+
+        <div class="jathagam-image-box">
+          <img src="{{jathagamImageUrl}}" alt="Jathagam Image" />
+        </div>
+      </div>
+    </div>
+
+
+
+
+    <div class="footer">
+      Generated by Vaniyar Chettiyar Kalyana Malai
+    </div>
+
+  </div>
+</body>
+
+</html>
