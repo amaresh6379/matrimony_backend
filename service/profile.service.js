@@ -519,7 +519,6 @@ const downloadProfile = async (req) => {
         id: req.params.id
       }
     };
-    c
     let [userErr, userData] = await to(getOneProfileDetails(input));
     if (userErr) {
       return TE(userErr.message);
