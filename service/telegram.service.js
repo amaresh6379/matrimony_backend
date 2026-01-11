@@ -1,6 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 require('../config');
 const authService = require('../service/auth.service');
+const profileService = require('../service/profile.service');
 
 const token = CONFIG.TELEGRAM_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
@@ -28,7 +29,8 @@ async function sendNewUserMessage(user) {
       inline_keyboard: [
         [
           { text: 'Activate ✅', callback_data: `activate_${user.id}` },
-          { text: 'Reject ❌', callback_data: `reject_${user.id}` }
+          { text: 'Reject ❌', callback_data: `reject_${user.id}` },
+          { text: 'Download', callback_data: `download_${user.id}` }
         ]
       ]
     }
@@ -79,6 +81,35 @@ bot.on('callback_query', async (callbackQuery) => {
 
       return updateUserData;
     }
+
+    if (data.startsWith('download_')) {
+      const userId = data.split('_')[1];
+
+      const req = {
+        params: { id: userId }
+      };
+
+      const [err, result] = await to(profileService.downloadProfile(req));
+      if (err) {
+        return bot.answerCallbackQuery(callbackQuery.id, {
+          text: `Error: ${err.message}`,
+          show_alert: true
+        });
+      }
+
+      // result should contain s3Url + matrimonyId
+      const fileName = `profile_${result.matrimonyId}.png`;
+
+      await bot.sendDocument(
+        callbackQuery.message.chat.id,
+        result.s3Url,
+        {
+          caption: '📄 Profile downloaded',
+          filename: fileName
+        }
+      );
+    }
+
   } catch (err) {
     console.error('Callback error:', err);
     await bot.answerCallbackQuery(callbackQuery.id, { text: 'Something went wrong!', show_alert: true });

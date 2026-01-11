@@ -132,7 +132,13 @@ const downloadProfile = async (req, res) => {
   if (matchErr) {
     return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
   }
-  return ReS(res, { result: matachData }, 200);
+  // return ReS(res, { result: matachData }, 200);
+  // res.set({
+  //   'Content-Disposition': `attachment; filename=filename="profile_${matachData.matrimonyId}.png"`,
+  //   'Content-Type': 'image/png'
+  // });
+
+  return res.redirect(matachData.s3Url);
 }
 
 

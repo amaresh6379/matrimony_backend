@@ -425,40 +425,79 @@ const getProfilePercentage = async (req) => {
 
 module.exports.getProfilePercentage = getProfilePercentage;
 
-async function generateProfileImage(htmlPath, data, outputPath) {
-  const browser = await puppeteer.launch({
-    headless: "new"
-  });
+// async function generateProfileImage(htmlPath, data, outputPath) {
+//   const browser = await puppeteer.launch({
+//     headless: "new"
+//   });
 
+//   const page = await browser.newPage();
+
+//   // Read HTML template
+//   let html = fs.readFileSync(htmlPath, "utf8");
+
+//   // Inject data into template
+//   Object.keys(data).forEach((key) => {
+//     html = html.replaceAll(`{{${key}}}`, data[key] || "");
+//   });
+
+//   // Load HTML
+//   await page.setContent(html, { waitUntil: "networkidle0" });
+
+//   // A4 size (high quality)
+//   await page.setViewport({
+//     width: 794,
+//     height: 930,
+//     deviceScaleFactor: 2
+//   });
+
+//   // Generate image
+//   await page.screenshot({
+//     path: outputPath,
+//     fullPage: true
+//   });
+
+//   await browser.close();
+
+//   return outputPath;
+// }
+async function generateProfileImage(htmlPath, data) {
+  const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
 
-  // Read HTML template
-  let html = fs.readFileSync(htmlPath, "utf8");
+  let html = fs.readFileSync(htmlPath, 'utf8');
 
-  // Inject data into template
   Object.keys(data).forEach((key) => {
-    html = html.replaceAll(`{{${key}}}`, data[key] || "");
+    html = html.replaceAll(`{{${key}}}`, data[key] || '');
   });
 
-  // Load HTML
-  await page.setContent(html, { waitUntil: "networkidle0" });
+  await page.setContent(html, { waitUntil: 'networkidle0' });
 
-  // A4 size (high quality)
   await page.setViewport({
     width: 794,
     height: 930,
-    deviceScaleFactor: 2
+    deviceScaleFactor: 2,
   });
 
-  // Generate image
-  await page.screenshot({
-    path: outputPath,
-    fullPage: true
+  // ⬇️ Return image as BUFFER
+  const imageBuffer = await page.screenshot({
+    type: 'png',
+    fullPage: true,
   });
 
   await browser.close();
+  return imageBuffer;
+}
+async function uploadImageBufferToS3(buffer, key) {
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: 'image/png',
+    })
+  );
 
-  return outputPath;
+  return `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 }
 
 
@@ -511,16 +550,21 @@ const downloadProfile = async (req) => {
     nachathiram: userData?.zodiacDetails?.[0]?.star?.dataValues?.starTamil ?? '-',
     assets: userData?.personalDetails?.[0]?.dataValues?.asset ?? '-',
     expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-',
-    // photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
-    jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/VCM202634.jpg`,
-    // jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/${userData.matrimonyId}.jpg`
-    photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/VCM202634.jpg`
+    photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
+    // jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/VCM202634.jpg`,
+    jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/${userData.matrimonyId}.jpg`
+    // photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/VCM202634.jpg`
   };
 
 
-  const data = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
-  console.log("data", data);
-  return true;
+  const bufferData = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
+  console.log("bufferData", bufferData);
+  const s3Url = await uploadImageBufferToS3(
+    bufferData,
+    `profile/profilecard/${userData.matrimonyId}.png`
+  );
+
+  return { s3Url, matrimonyId: userData.matrimonyId };
 }
 
 module.exports.downloadProfile = downloadProfile;
