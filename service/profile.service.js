@@ -160,6 +160,7 @@ module.exports.createProfileImage = createProfileImage;
 const getOneProfileDetails = async (req) => {
   const id = req?.user?.id;
   if (!id) return TE('Id is required');
+  console.log('id', id);
   const [matchErr, matachData] = await to(Profile.findOne({
     attributes: ['matrimonyId', 'name', 'gender', 'mobileNumber', 'dob', 'martialStatus', 'religion', 'nativePlace', 'districtId'],
     where: {
