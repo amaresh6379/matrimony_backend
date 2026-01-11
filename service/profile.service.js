@@ -162,7 +162,7 @@ const getOneProfileDetails = async (req) => {
   if (!id) return TE('Id is required');
   console.log('id', id);
   const [matchErr, matachData] = await to(Profile.findOne({
-    attributes: ['matrimonyId', 'name', 'gender', 'mobileNumber', 'dob', 'martialStatus', 'religion', 'nativePlace', 'districtId'],
+    attributes: ['id','matrimonyId', 'name', 'gender', 'mobileNumber', 'dob', 'martialStatus', 'religion', 'nativePlace', 'districtId'],
     where: {
       id: id,
       isDeleted: false,
@@ -462,7 +462,7 @@ module.exports.getProfilePercentage = getProfilePercentage;
 //   return outputPath;
 // }
 async function generateProfileImage(htmlPath, data) {
-  console.log("inside image geenrator html", html);
+  console.log("inside image geenrator html", htmlPath);
   console.log("inside image geenrator data", data);
 
   const browser = await puppeteer.launch({ headless: 'new' });
@@ -572,7 +572,8 @@ const downloadProfile = async (req) => {
       // photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/VCM202634.jpg`
     };
 
-    // console.log("particularUserDetail", particularUserDetail);
+    console.log("html", path.join(__dirname, 'profileCard.html'));
+    console.log("particularUserDetail", particularUserDetail);
     const bufferData = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
     console.log("bufferData", bufferData);
     const s3Url = await uploadImageBufferToS3(
@@ -581,6 +582,7 @@ const downloadProfile = async (req) => {
     );
     if (s3Url) {
       console.log("s3Url", s3Url);
+      console.log("userData.id", userData.id);
       const [updateUserErr, updateUserData] = await to(Profile.update({ profileCardUrl: s3Url }, { where: { id: userData.id } }));
       if (updateUserErr) {
         return TE(updateUserErr.message);
