@@ -166,7 +166,7 @@ const getOneProfileDetails = async (req) => {
     where: {
       id: id,
       isDeleted: false,
-      isActive: true
+      // isActive: true
     },
     include: [
       {
