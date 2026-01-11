@@ -557,7 +557,7 @@ const downloadProfile = async (req) => {
       month: "2-digit",
       year: "numeric"
     });
-    console.log("userData.matrimonyId", userData.matrimonyId);
+    console.log("userData", userData?.careerDetails?.[0]?.dataValues);
     particularUserDetail = {
       name: userData.name,
       gender: userData.gender,
