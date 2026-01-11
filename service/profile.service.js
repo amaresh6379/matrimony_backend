@@ -462,6 +462,9 @@ module.exports.getProfilePercentage = getProfilePercentage;
 //   return outputPath;
 // }
 async function generateProfileImage(htmlPath, data) {
+  console.log("inside image geenrator html", html);
+  console.log("inside image geenrator data", data);
+
   const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
 
@@ -525,7 +528,7 @@ const downloadProfile = async (req) => {
     if (userErr) {
       return TE(userErr.message);
     }
-    console.log("userData", userData);
+    // console.log("userData", userData);
     let particularUserDetail = {};
     const educationDetails = userData?.careerDetails[0]?.dataValues?.educationDetails?.join(", ");
     const contactDetails =
@@ -569,7 +572,7 @@ const downloadProfile = async (req) => {
       // photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/VCM202634.jpg`
     };
 
-
+    // console.log("particularUserDetail", particularUserDetail);
     const bufferData = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
     console.log("bufferData", bufferData);
     const s3Url = await uploadImageBufferToS3(
