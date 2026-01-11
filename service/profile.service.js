@@ -808,7 +808,7 @@ const BulkCreateProfile = async function (req) {
       starId: starData?.id ?? null,
       patham: answers.q49_input49?.match(/\d+/)?.[0],
       dosham: answers.q50_dosham,
-      jathgamImage: jathamImage ?? null
+      jathgamImage: jathamImage?.url ?? null
     },
     params: { id: JSON.stringify(profileSucc.id) }
   }));
@@ -821,7 +821,7 @@ const BulkCreateProfile = async function (req) {
   console.log('[BulkCreateProfile] Zodiac created');
 
   const [createProfileImageErr] = await to(createProfileImage({
-    body: { profileUrl: photo ?? null },
+    body: { profileUrl: photo?.url ?? null },
     params: { id: JSON.stringify(profileSucc.id) }
   }));
 
