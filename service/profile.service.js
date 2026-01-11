@@ -577,7 +577,7 @@ const downloadProfile = async (req) => {
       year: "numeric"
     });
     console.log("personal details", userData?.personalDetails?.[0]?.dataValues);
-    console.log("zodiac details", userData?.zodiacDetails?.[0]?.dataValues);
+    console.log("height", userData?.personalDetails?.[0]?.dataValues?.height);
     particularUserDetail = {
       name: userData.name,
       matrimonyId: userData.matrimonyId,
@@ -593,6 +593,8 @@ const downloadProfile = async (req) => {
       company: userData?.careerDetails?.[0]?.dataValues?.companyName ?? '-',
       salary: userData?.careerDetails?.[0]?.dataValues?.monthyIncome ?? '-',
       workLocation: userData?.careerDetails?.[0]?.dataValues?.workLocation ?? '-',
+      height: userData?.personalDetails?.[0]?.dataValues?.height?.[0]?.dataValues?.heightName ?? '-',
+      weight: userData?.personalDetails?.[0]?.dataValues?.height?.[0]?.dataValues?.weightName ?? '-',
       contact: contactDetails ?? '-',
       fatherName: userData?.parentDetails?.[0]?.dataValues?.fatherName ?? '-',
       motherName: userData?.parentDetails?.[0]?.dataValues?.motherName ?? '-',
@@ -601,6 +603,7 @@ const downloadProfile = async (req) => {
       paatham: userData?.zodiacDetails?.[0]?.dataValues?.patham ? userData?.zodiacDetails?.[0]?.dataValues?.patham + ' ஆம் பாதம்' : '-',
       dosham: userData?.zodiacDetails?.[0]?.dataValues?.dosham ?? '-',
       foodOption: userData?.personalDetails?.[0]?.dataValues?.foodOption ?? '-',
+      color: userData?.personalDetails?.[0]?.dataValues?.skinTone ?? '-',
       assets: userData?.personalDetails?.[0]?.dataValues?.asset ?? '-',
       expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-',
       photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
