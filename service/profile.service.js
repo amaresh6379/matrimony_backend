@@ -573,17 +573,25 @@ module.exports.downloadProfile = downloadProfile;
 
 
 const BulkCreateProfile = async function (req) {
+  console.log('[BulkCreateProfile] START');
+
   const profileData = req.body;
   let rawData = {};
+
+  console.log('[BulkCreateProfile] Request keys:', Object.keys(profileData || {}));
+
   if (profileData.rawRequest) {
     try {
       rawData = JSON.parse(profileData.rawRequest);
+      console.log('[BulkCreateProfile] rawRequest parsed successfully');
     } catch (err) {
-      console.error('Invalid rawRequest JSON');
+      console.error('[BulkCreateProfile] Invalid rawRequest JSON', err.message);
       return;
     }
   }
-  console.log("rawData", rawData);
+
+  console.log('[BulkCreateProfile] rawData keys:', Object.keys(rawData || {}));
+
   const answers = {};
   for (const key in rawData) {
     if (key.startsWith('q')) {
@@ -591,160 +599,205 @@ const BulkCreateProfile = async function (req) {
     }
   }
 
+  console.log('[BulkCreateProfile] Extracted answers count:', Object.keys(answers).length);
 
-  // console.log("answers", JSON.stringify(answers));
-  // district fetch
+  /* -------------------- MASTER FETCHES -------------------- */
+
   let districtErr, districtData;
   if (answers.q65_district) {
-    [districtErr, districtData] = await to(District.findOne({ where: { districtName: answers.q65_district } }));
+    console.log('[BulkCreateProfile] Fetching District:', answers.q65_district);
+    [districtErr, districtData] = await to(
+      District.findOne({ where: { districtName: answers.q65_district } })
+    );
     if (districtErr) {
+      console.error('[BulkCreateProfile] District fetch error', districtErr.message);
       return TE(districtErr.message);
     }
-  }
-  // star fetch
-  let starErr, starData;
-  if (answers.q48_starnbsp) {
-    [starErr, starData] = await to(Star.findOne({ where: { starTamil: answers.q48_starnbsp } }));
-    if (starErr) {
-      return TE(starErr.message);
-    }
+    console.log('[BulkCreateProfile] District found:', districtData?.id);
   }
 
-  // zodiac fetch
+  let starErr, starData;
+  if (answers.q48_starnbsp) {
+    console.log('[BulkCreateProfile] Fetching Star:', answers.q48_starnbsp);
+    [starErr, starData] = await to(
+      Star.findOne({ where: { starTamil: answers.q48_starnbsp } })
+    );
+    if (starErr) {
+      console.error('[BulkCreateProfile] Star fetch error', starErr.message);
+      return TE(starErr.message);
+    }
+    console.log('[BulkCreateProfile] Star found:', starData?.id);
+  }
+
   let zodiacErr, zodiacData;
   if (answers.q47_zodiacnbsp) {
-    [zodiacErr, zodiacData] = await to(Zodiac.findOne({ where: { zodiacTamil: answers.q47_zodiacnbsp } }));
+    console.log('[BulkCreateProfile] Fetching Zodiac:', answers.q47_zodiacnbsp);
+    [zodiacErr, zodiacData] = await to(
+      Zodiac.findOne({ where: { zodiacTamil: answers.q47_zodiacnbsp } })
+    );
     if (zodiacErr) {
+      console.error('[BulkCreateProfile] Zodiac fetch error', zodiacErr.message);
       return TE(zodiacErr.message);
     }
+    console.log('[BulkCreateProfile] Zodiac found:', zodiacData?.id);
   }
-  // weight fetch
+
   let weightErr, weightData;
   if (answers.q74_weight) {
-    [weightErr, weightData] = await to(Weight.findOne({ where: { weightName: answers.q74_weight } }));
+    console.log('[BulkCreateProfile] Fetching Weight:', answers.q74_weight);
+    [weightErr, weightData] = await to(
+      Weight.findOne({ where: { weightName: answers.q74_weight } })
+    );
     if (weightErr) {
+      console.error('[BulkCreateProfile] Weight fetch error', weightErr.message);
       return TE(weightErr.message);
     }
   }
-  // height fetch
+
   let heightErr, heightData;
   if (answers.q73_height) {
-    [heightErr, heightData] = await to(Height.findOne({ where: { heightName: answers.q73_height } }));
+    console.log('[BulkCreateProfile] Fetching Height:', answers.q73_height);
+    [heightErr, heightData] = await to(
+      Height.findOne({ where: { heightName: answers.q73_height } })
+    );
     if (heightErr) {
+      console.error('[BulkCreateProfile] Height fetch error', heightErr.message);
       return TE(heightErr.message);
     }
   }
+
+  /* -------------------- PROFILE CREATE -------------------- */
+
   const profileDetails = {
     body: {
-      gender: answers.q36_gender.toUpperCase(),
+      gender: answers.q36_gender?.toUpperCase(),
       name: answers.q64_name,
       dob: answers.q25_date,
-      mobileNumber: answers.q72_mobileNumber72.replace(/\D/g, ""),
+      mobileNumber: answers.q72_mobileNumber72?.replace(/\D/g, ''),
       password: 'Admin@123',
-      martialStatus: answers.q34_martialStatus.toUpperCase(),
-      religion: answers.q42_religion.toUpperCase(),
+      martialStatus: answers.q34_martialStatus?.toUpperCase(),
+      religion: answers.q42_religion?.toUpperCase(),
       nativePlace: answers.q28_typeA,
-      districtId: districtData.id ?? null
+      districtId: districtData?.id ?? null
     }
   };
-  // console.log("profileDetails", profileDetails);
+
+  console.log('[BulkCreateProfile] Creating Profile:', profileDetails.body.mobileNumber);
+
   const [profileErr, profileSucc] = await to(createProfile(profileDetails));
   if (profileErr) {
+    console.error('[BulkCreateProfile] Profile creation failed', profileErr.message);
     return TE(profileErr.message);
   }
-  // console.log("profileSucc", profileSucc);
-  if (profileSucc?.id) {
-    const careerDetails = {
-      body: {
-        educationDetails: [answers.q38_education],
-        profession: answers.q39_profession,
-        companyName: answers.q40_company,
-        monthyIncome: answers.q41_monthlyIncome,
-        workLocation: answers.q42_workLocation
-      },
-      params: { id: JSON.stringify(profileSucc.id) }
-    }
-    const [careerErr, careerSucc] = await to(createCareerDetails(careerDetails));
-    if (careerErr) {
-      return TE(careerErr.message);
-    }
-    // console.log("careerSucc", careerSucc);
-    const familyDetails = {
-      body: {
-        fatherName: answers.q45_fathersName,
-        motherName: answers.q31_mothersName,
-        fatherMobileNumber: null,
-        motherMobileNumber: null,
-        siblingMale: null,
-        siblingFemale: null,
-        marriedMale: null,
-        marriedFemale: null,
-        contactPersonName: answers.q53_typeA53,
-        contactPersonNumber: answers.q54_typeA54,
-        contactPersonType: answers.q55_mobileNumber.replace(/\D/g, "")
-      },
-      params: { id: JSON.stringify(profileSucc.id) }
-    }
-    const [familyErr, familySucc] = await to(createFamilyDetails(familyDetails));
-    if (familyErr) {
-      return TE(familyErr.message);
-    }
 
-    let jathamImage, photo;
-    // console.log("rawData?.jathamImage?.[0]", rawData?.jathamImage?.[0], "rawData?.photo?.[0]", rawData?.photo?.[0]);
-    if (rawData?.jathamImage?.[0]) {
-      jathamImage = await uploadImageFromUrl(rawData?.jathamImage?.[0], 'profile/jathagamimage', profileSucc.matrimonyId)
-      console.log("jathamImage", jathamImage);
-    }
-    if (rawData?.photo?.[0]) {
-      photo = await uploadImageFromUrl(rawData?.photo?.[0], 'profile/profileimage', profileSucc.matrimonyId)
-    }
+  console.log('[BulkCreateProfile] Profile created:', profileSucc?.id);
 
-
-    // console.log("familySucc", familySucc);
-    const zodiacDetails = {
-      body: {
-        zodiacId: zodiacData.id ?? null,
-        starId: starData.id ?? null,
-        patham: answers.q49_input49.match(/\d+/)?.[0],
-        dosham: answers.q50_dosham,
-        jathgamImage: jathamImage ?? null,
-      },
-      params: { id: JSON.stringify(profileSucc.id) }
-    };
-    const [zodiacErr, zodiacSucc] = await to(createZodiacDetails(zodiacDetails));
-    if (zodiacErr) {
-      return TE(zodiacErr.message);
-    }
-    const profileImage = {
-      body: {
-        profileUrl: photo ?? null
-      },
-      params: { id: JSON.stringify(profileSucc.id) }
-    }
-    const [imageErr, imageSucc] = await to(createProfileImage(profileImage));
-    if (imageErr) {
-      return TE(imageErr.message);
-    }
-    // console.log("imageSucc", imageSucc);
-    const personalDetails = {
-      body: {
-        heightId: heightData?.id ?? null,
-        weightId: weightData?.id ?? null,
-        skinTone: answers.q60_color,
-        foodOption: answers.q61_foodOption === 'அசைவம்' ? 'NONVEG' : (answers.q61_foodOption === 'சைவம்' ? 'VEG' : 'SOMETIMES_NONVEG'),
-        Intereqt: answers.q57_input57,
-        asset: answers.q56_input56
-      },
-      params: { id: JSON.stringify(profileSucc.id) }
-    };
-    const [personalErr, personalSucc] = await to(createPersonalDetails(personalDetails));
-    if (personalErr) {
-      return TE(personalErr.message);
-    }
-    // console.log("personalSucc", personalSucc);
+  if (!profileSucc?.id) {
+    console.warn('[BulkCreateProfile] Profile ID missing, aborting');
+    return;
   }
-}
+
+  /* -------------------- CAREER -------------------- */
+
+  console.log('[BulkCreateProfile] Creating Career Details');
+
+  const careerDetails = {
+    body: {
+      educationDetails: [answers.q38_education],
+      profession: answers.q39_profession,
+      companyName: answers.q40_company,
+      monthyIncome: answers.q41_monthlyIncome,
+      workLocation: answers.q42_workLocation
+    },
+    params: { id: JSON.stringify(profileSucc.id) }
+  };
+
+  const [careerErr] = await to(createCareerDetails(careerDetails));
+  if (careerErr) {
+    console.error('[BulkCreateProfile] Career creation failed', careerErr.message);
+    return TE(careerErr.message);
+  }
+
+  /* -------------------- FAMILY -------------------- */
+
+  console.log('[BulkCreateProfile] Creating Family Details');
+
+  const familyDetails = {
+    body: {
+      fatherName: answers.q45_fathersName,
+      motherName: answers.q31_mothersName,
+      contactPersonName: answers.q53_typeA53,
+      contactPersonNumber: answers.q54_typeA54,
+      contactPersonType: answers.q55_mobileNumber?.replace(/\D/g, '')
+    },
+    params: { id: JSON.stringify(profileSucc.id) }
+  };
+
+  const [familyErr] = await to(createFamilyDetails(familyDetails));
+  if (familyErr) {
+    console.error('[BulkCreateProfile] Family creation failed', familyErr.message);
+    return TE(familyErr.message);
+  }
+
+  /* -------------------- IMAGE UPLOAD -------------------- */
+
+  let jathamImage, photo;
+
+  if (rawData?.jathamImage?.[0]) {
+    console.log('[BulkCreateProfile] Uploading Jathagam Image');
+    jathamImage = await uploadImageFromUrl(
+      rawData.jathamImage[0],
+      'profile/jathagamimage',
+      profileSucc.matrimonyId
+    );
+  }
+
+  if (rawData?.photo?.[0]) {
+    console.log('[BulkCreateProfile] Uploading Profile Image');
+    photo = await uploadImageFromUrl(
+      rawData.photo[0],
+      'profile/profileimage',
+      profileSucc.matrimonyId
+    );
+  }
+
+  /* -------------------- FINAL DETAILS -------------------- */
+
+  console.log('[BulkCreateProfile] Creating Zodiac & Personal Details');
+
+  await to(createZodiacDetails({
+    body: {
+      zodiacId: zodiacData?.id ?? null,
+      starId: starData?.id ?? null,
+      patham: answers.q49_input49?.match(/\d+/)?.[0],
+      dosham: answers.q50_dosham,
+      jathgamImage: jathamImage ?? null
+    },
+    params: { id: JSON.stringify(profileSucc.id) }
+  }));
+
+  await to(createProfileImage({
+    body: { profileUrl: photo ?? null },
+    params: { id: JSON.stringify(profileSucc.id) }
+  }));
+
+  await to(createPersonalDetails({
+    body: {
+      heightId: heightData?.id ?? null,
+      weightId: weightData?.id ?? null,
+      skinTone: answers.q60_color,
+      foodOption:
+        answers.q61_foodOption === 'அசைவம்' ? 'NONVEG' :
+          answers.q61_foodOption === 'சைவம்' ? 'VEG' : 'SOMETIMES_NONVEG',
+      Intereqt: answers.q57_input57,
+      asset: answers.q56_input56
+    },
+    params: { id: JSON.stringify(profileSucc.id) }
+  }));
+
+  console.log('[BulkCreateProfile] COMPLETED SUCCESSFULLY:', profileSucc.id);
+};
+
 
 
 function normalizeValue(value) {
