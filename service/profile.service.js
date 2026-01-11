@@ -566,14 +566,13 @@ const downloadProfile = async (req) => {
       userData?.parentDetails?.[0]?.dataValues?.contactPersonNumber;
 
 
-
+    console.log("userData?.dob", userData?.dob);
     const readableDate = userData?.dob?.toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric"
     });
     console.log("personal details", userData?.personalDetails?.[0]?.dataValues);
-    console.log("height", userData?.personalDetails?.[0]?.dataValues?.height);
     particularUserDetail = {
       name: userData.name,
       matrimonyId: userData.matrimonyId,
@@ -624,27 +623,24 @@ const downloadProfile = async (req) => {
 module.exports.downloadProfile = downloadProfile;
 
 
+function parseDOB_MMDDYYYY(dateStr) {
+  console.log("dateStr", dateStr);
+  const [month, day, year] = dateStr.split('-');
+  return new Date(Date.UTC(year, month - 1, day));
+}
 
 
 const BulkCreateProfile = async function (req) {
-  console.log('[BulkCreateProfile] START');
-
   const profileData = req.body;
   let rawData = {};
-
-  console.log('[BulkCreateProfile] Request keys:', Object.keys(profileData || {}));
-
   if (profileData.rawRequest) {
     try {
       rawData = JSON.parse(profileData.rawRequest);
-      console.log('[BulkCreateProfile] rawRequest parsed successfully');
     } catch (err) {
       console.error('[BulkCreateProfile] Invalid rawRequest JSON', err.message);
       return;
     }
   }
-
-  console.log('[BulkCreateProfile] rawData keys:', Object.keys(rawData || {}));
 
   const answers = {};
   for (const key in rawData) {
@@ -652,8 +648,6 @@ const BulkCreateProfile = async function (req) {
       answers[key] = normalizeValue(rawData[key]);
     }
   }
-
-  console.log('[BulkCreateProfile] Extracted answers count:', Object.keys(answers).length);
 
   /* -------------------- MASTER FETCHES -------------------- */
 
@@ -726,7 +720,7 @@ const BulkCreateProfile = async function (req) {
     body: {
       gender: answers.q36_gender?.toUpperCase(),
       name: answers.q64_name,
-      dob: new Date(answers.q25_date),
+      dob: parseDOB_MMDDYYYY(answers.q25_date),
       mobileNumber: answers.q72_mobileNumber72?.replace(/\D/g, ''),
       password: 'Admin@123',
       martialStatus: answers.q34_martialStatus?.toUpperCase(),
@@ -736,24 +730,18 @@ const BulkCreateProfile = async function (req) {
     }
   };
 
-  console.log('[BulkCreateProfile] Creating Profile:', profileDetails.body.mobileNumber);
-
   const [profileErr, profileSucc] = await to(createProfile(profileDetails));
   if (profileErr) {
     console.error('[BulkCreateProfile] Profile creation failed', profileErr.message);
     return TE(profileErr.message);
   }
 
-  console.log('[BulkCreateProfile] Profile created:', profileSucc?.id);
-
   if (!profileSucc?.id) {
     console.warn('[BulkCreateProfile] Profile ID missing, aborting');
     return;
   }
 
-  /* -------------------- CAREER -------------------- */
 
-  console.log('[BulkCreateProfile] Creating Career Details');
 
   const careerDetails = {
     body: {
@@ -772,9 +760,6 @@ const BulkCreateProfile = async function (req) {
     return TE(careerErr.message);
   }
 
-  /* -------------------- FAMILY -------------------- */
-
-  console.log('[BulkCreateProfile] Creating Family Details');
 
   const familyDetails = {
     body: {
@@ -793,12 +778,11 @@ const BulkCreateProfile = async function (req) {
     return TE(familyErr.message);
   }
 
-  /* -------------------- IMAGE UPLOAD -------------------- */
+
 
   let jathamImage, photo;
 
   if (rawData?.jathamImage?.[0]) {
-    console.log('[BulkCreateProfile] Uploading Jathagam Image');
     jathamImage = await uploadImageFromUrl(
       rawData.jathamImage[0],
       'profile/jathagamimage',
@@ -815,9 +799,7 @@ const BulkCreateProfile = async function (req) {
     );
   }
 
-  /* -------------------- FINAL DETAILS -------------------- */
 
-  console.log('[BulkCreateProfile] Creating Zodiac & Personal Details');
 
   const [zodiacDetailsErr, zodiacDetailsData] = await to(createZodiacDetails({
     body: {
@@ -848,7 +830,6 @@ const BulkCreateProfile = async function (req) {
   }
 
   console.log('[BulkCreateProfile] Profile Image created');
-  console.log("Interset", answers.q57_input57);
   const [createPersonalDetailsErr] = await to(createPersonalDetails({
     body: {
       heightId: heightData?.id ?? null,
@@ -911,11 +892,6 @@ function normalizeValue(value) {
 
 
 async function uploadImageFromUrl(source, folder, profileId) {
-  console.log('================ START uploadImageFromUrl ================');
-  console.log('Source URL:', source);
-  console.log('Folder:', folder);
-  console.log('Profile ID:', profileId);
-
   if (!source) {
     console.warn('Source is empty');
     return null;
@@ -925,7 +901,6 @@ async function uploadImageFromUrl(source, folder, profileId) {
   let extension;
 
   try {
-    console.log('Fetching image from public URL...');
     response = await axios.get(source, {
       responseType: 'arraybuffer', // <-- consume full response as buffer
       timeout: 20000,
@@ -936,41 +911,24 @@ async function uploadImageFromUrl(source, folder, profileId) {
       },
     });
 
-    console.log('HTTP Status:', response.status);
-    console.log('Response headers:', response.headers);
-
-    // ======================================================
-    // Get extension from Content-Disposition or fallback
-    // ======================================================
     const disposition = response.headers['content-disposition'];
-    console.log('Content-Disposition:', disposition);
-
     if (disposition && disposition.includes('filename=')) {
       const matches = disposition.match(/filename="?(.+?)"?$/);
       if (matches && matches[1]) {
         const filename = matches[1];
-        console.log('Detected filename:', filename);
         extension = filename.split('.').pop();
       }
     }
 
     if (!extension) {
       const contentType = response.headers['content-type'];
-      console.log('Fallback content-type:', contentType);
       if (contentType && contentType.startsWith('image/')) {
         extension = contentType.split('/')[1];
       } else {
         throw new Error('Cannot determine file extension');
       }
     }
-
-    console.log('Detected file extension:', extension);
-
-    // ======================================================
-    // Upload to S3
-    // ======================================================
     const key = `${folder}/${profileId}.${extension}`;
-    console.log('Uploading to S3 with key:', key);
 
     const uploadParams = {
       Bucket: CONFIG.AWS_BUCKET,
@@ -993,7 +951,6 @@ async function uploadImageFromUrl(source, folder, profileId) {
 
     const finalUrl = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`;
     console.log('✅ Upload successful:', finalUrl);
-    console.log('================ END uploadImageFromUrl ================');
 
     return { key, url: finalUrl };
   } catch (err) {
