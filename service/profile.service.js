@@ -750,8 +750,8 @@ const BulkCreateProfile = async function (req) {
       educationDetails: [answers.q38_education],
       profession: answers.q39_profession ?? null,
       companyName: answers.q40_company ?? null,
-      monthyIncome: answers.q41_monthlyIncome ?? 0,
-      workLocation: answers.q42_workLocation ?? null 
+      monthyIncome: answers.q41_monthlyIncome ? answers.q41_monthlyIncome : 0,
+      workLocation: answers.q42_workLocation ?? null
     },
     params: { id: JSON.stringify(profileSucc.id) }
   };
