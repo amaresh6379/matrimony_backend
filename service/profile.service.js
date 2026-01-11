@@ -732,7 +732,7 @@ const BulkCreateProfile = async function (req) {
     body: {
       gender: answers.q36_gender?.toUpperCase(),
       name: answers.q64_name,
-      dob: answers.q25_date,
+      dob: new Date(answers.q25_date),
       mobileNumber: answers.q72_mobileNumber72?.replace(/\D/g, ''),
       password: 'Admin@123',
       martialStatus: answers.q34_martialStatus?.toUpperCase(),
@@ -787,8 +787,8 @@ const BulkCreateProfile = async function (req) {
       fatherName: answers.q45_fathersName,
       motherName: answers.q31_mothersName,
       contactPersonName: answers.q53_typeA53,
-      contactPersonNumber: answers.q54_typeA54,
-      contactPersonType: answers.q55_mobileNumber?.replace(/\D/g, '')
+      contactPersonNumber: answers.q55_mobileNumber?.replace(/\D/g, ''),
+      contactPersonType: answers.q54_typeA54
     },
     params: { id: JSON.stringify(profileSucc.id) }
   };
