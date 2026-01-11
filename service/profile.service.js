@@ -649,6 +649,7 @@ const BulkCreateProfile = async function (req) {
       answers[key] = normalizeValue(rawData[key]);
     }
   }
+  console.log('[BulkCreateProfile] Answers:', answers);
 
   /* -------------------- MASTER FETCHES -------------------- */
 
