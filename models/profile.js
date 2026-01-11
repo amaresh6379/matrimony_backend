@@ -76,7 +76,11 @@ module.exports = (db, Sequelize) => {
     },
     failedAttempts: {
       type: Sequelize.INTEGER
-    }
+    },
+    isThirdParty: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false
+    } 
   },
     {
       tableName: 'profile', schema: 'matrimony', underscored: true, timestamps: false,

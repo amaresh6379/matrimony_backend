@@ -748,10 +748,10 @@ const BulkCreateProfile = async function (req) {
   const careerDetails = {
     body: {
       educationDetails: [answers.q38_education],
-      profession: answers.q39_profession,
-      companyName: answers.q40_company,
-      monthyIncome: answers.q41_monthlyIncome,
-      workLocation: answers.q42_workLocation
+      profession: answers.q39_profession ?? null,
+      companyName: answers.q40_company ?? null,
+      monthyIncome: answers.q41_monthlyIncome ?? 0,
+      workLocation: answers.q42_workLocation ?? null 
     },
     params: { id: JSON.stringify(profileSucc.id) }
   };
@@ -765,11 +765,11 @@ const BulkCreateProfile = async function (req) {
 
   const familyDetails = {
     body: {
-      fatherName: answers.q45_fathersName,
-      motherName: answers.q31_mothersName,
-      contactPersonName: answers.q53_typeA53,
+      fatherName: answers.q45_fathersName ?? null,
+      motherName: answers.q31_mothersName ?? null,
+      contactPersonName: answers.q53_typeA53 ?? null,
       contactPersonNumber: answers.q55_mobileNumber?.replace(/\D/g, ''),
-      contactPersonType: answers.q54_typeA54
+      contactPersonType: answers.q54_typeA54 ?? null
     },
     params: { id: JSON.stringify(profileSucc.id) }
   };
@@ -808,7 +808,7 @@ const BulkCreateProfile = async function (req) {
       zodiacId: zodiacData?.id ?? null,
       starId: starData?.id ?? null,
       patham: answers.q49_input49?.match(/\d+/)?.[0],
-      dosham: answers.q50_dosham,
+      dosham: answers.q50_dosham ?? null,
       jathgamImage: jathamImage?.url ?? null
     },
     params: { id: JSON.stringify(profileSucc.id) }
