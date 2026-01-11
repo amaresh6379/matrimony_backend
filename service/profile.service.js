@@ -503,68 +503,85 @@ async function uploadImageBufferToS3(buffer, key) {
 
 const downloadProfile = async (req) => {
 
-  const input = {
-    user: {
-      id: req.params.id
-    }
-  };
-
-  let [userErr, userData] = await to(getOneProfileDetails(input));
-  if (userErr) {
-    return TE(userErr.message);
+  const [getProfileCardErr, getProfileCardData] = await to(Profile.findOne({
+    attributes: ['profileCardUrl'],
+    where: { id: req.params.id }
+  }));
+  if (getProfileCardErr) {
+    return TE(getProfileCardErr.message);
   }
-  let particularUserDetail = {};
-  const educationDetails = userData.careerDetails[0].dataValues.educationDetails.join(", ");
-  const contactDetails =
-    userData?.parentDetails?.[0]?.dataValues?.contactPersonName +
-    ' (' +
-    userData?.parentDetails?.[0]?.dataValues?.contactPersonType +
-    ')\n' +
-    userData?.parentDetails?.[0]?.dataValues?.contactPersonNumber;
+  if (getProfileCardData.profileCardUrl) {
+    return { s3Url: getProfileCardData.profileCardUrl, matrimonyId: getProfileCardData.matrimonyId };
+  }
+  else if (!getProfileCardData.profileCardUrl) {
+    const input = {
+      user: {
+        id: req.params.id
+      }
+    };
+    let [userErr, userData] = await to(getOneProfileDetails(input));
+    if (userErr) {
+      return TE(userErr.message);
+    }
+    let particularUserDetail = {};
+    const educationDetails = userData.careerDetails[0].dataValues.educationDetails.join(", ");
+    const contactDetails =
+      userData?.parentDetails?.[0]?.dataValues?.contactPersonName +
+      ' (' +
+      userData?.parentDetails?.[0]?.dataValues?.contactPersonType +
+      ')\n' +
+      userData?.parentDetails?.[0]?.dataValues?.contactPersonNumber;
 
 
 
-  const readableDate = userData?.dob?.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  });
-  console.log("userData.matrimonyId", userData.matrimonyId);
-  particularUserDetail = {
-    name: userData.name,
-    gender: userData.gender,
-    dob: readableDate,
-    age: new Date().getFullYear() - new Date(userData.dob).getFullYear(),
-    maritalStatus: userData.martialStatus ?? '-',
-    religion: userData.religion ?? '-',
-    nativePlace: userData.nativePlace ?? '-',
-    district: userData?.district?.dataValues?.districtName ?? '-',
-    education: educationDetails ?? '-',
-    profession: userData?.careerDetails?.[0]?.dataValues?.profession ?? '-',
-    company: userData?.careerDetails?.[0]?.dataValues?.company ?? '-',
-    salary: userData?.careerDetails?.[0]?.dataValues?.salary ?? '-',
-    contact: contactDetails ?? '-',
-    fatherName: userData?.parentDetails?.[0]?.dataValues?.fatherName ?? '-',
-    motherName: userData?.parentDetails?.[0]?.dataValues?.motherName ?? '-',
-    raasi: userData?.zodiacDetails?.[0]?.zodiac?.dataValues?.zodiacTamil ?? '-',
-    nachathiram: userData?.zodiacDetails?.[0]?.star?.dataValues?.starTamil ?? '-',
-    assets: userData?.personalDetails?.[0]?.dataValues?.asset ?? '-',
-    expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-',
-    photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
-    // jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/VCM202634.jpg`,
-    jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/${userData.matrimonyId}.jpg`
-    // photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/VCM202634.jpg`
-  };
+    const readableDate = userData?.dob?.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+    console.log("userData.matrimonyId", userData.matrimonyId);
+    particularUserDetail = {
+      name: userData.name,
+      gender: userData.gender,
+      dob: readableDate,
+      age: new Date().getFullYear() - new Date(userData.dob).getFullYear(),
+      maritalStatus: userData.martialStatus ?? '-',
+      religion: userData.religion ?? '-',
+      nativePlace: userData.nativePlace ?? '-',
+      district: userData?.district?.dataValues?.districtName ?? '-',
+      education: educationDetails ?? '-',
+      profession: userData?.careerDetails?.[0]?.dataValues?.profession ?? '-',
+      company: userData?.careerDetails?.[0]?.dataValues?.company ?? '-',
+      salary: userData?.careerDetails?.[0]?.dataValues?.salary ?? '-',
+      contact: contactDetails ?? '-',
+      fatherName: userData?.parentDetails?.[0]?.dataValues?.fatherName ?? '-',
+      motherName: userData?.parentDetails?.[0]?.dataValues?.motherName ?? '-',
+      raasi: userData?.zodiacDetails?.[0]?.zodiac?.dataValues?.zodiacTamil ?? '-',
+      nachathiram: userData?.zodiacDetails?.[0]?.star?.dataValues?.starTamil ?? '-',
+      assets: userData?.personalDetails?.[0]?.dataValues?.asset ?? '-',
+      expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-',
+      photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
+      // jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/VCM202634.jpg`,
+      jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/${userData.matrimonyId}.jpg`
+      // photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/VCM202634.jpg`
+    };
 
 
-  const bufferData = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
-  console.log("bufferData", bufferData);
-  const s3Url = await uploadImageBufferToS3(
-    bufferData,
-    `profile/profilecard/${userData.matrimonyId}.png`
-  );
-
-  return { s3Url, matrimonyId: userData.matrimonyId };
+    const bufferData = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
+    console.log("bufferData", bufferData);
+    const s3Url = await uploadImageBufferToS3(
+      bufferData,
+      `profile/profilecard/${userData.matrimonyId}.png`
+    );
+    if (s3Url) {
+      console.log("s3Url", s3Url);
+      const [updateUserErr, updateUserData] = await to(Profile.update({ profileCardUrl: s3Url }, { where: { id: userData.id } }));
+      if (updateUserErr) {
+        return TE(updateUserErr.message);
+      }
+    }
+    return { s3Url, matrimonyId: userData.matrimonyId };
+  }
 }
 
 module.exports.downloadProfile = downloadProfile;
@@ -765,7 +782,7 @@ const BulkCreateProfile = async function (req) {
 
   console.log('[BulkCreateProfile] Creating Zodiac & Personal Details');
 
-  await to(createZodiacDetails({
+  const [zodiacDetailsErr] = await to(createZodiacDetails({
     body: {
       zodiacId: zodiacData?.id ?? null,
       starId: starData?.id ?? null,
@@ -776,12 +793,22 @@ const BulkCreateProfile = async function (req) {
     params: { id: JSON.stringify(profileSucc.id) }
   }));
 
-  await to(createProfileImage({
+  if (zodiacDetailsErr) {
+    console.error('[BulkCreateProfile] Zodiac creation failed', zodiacDetailsErr.message);
+    return TE(zodiacDetailsErr.message);
+  }
+
+  const [createProfileImageErr] = await to(createProfileImage({
     body: { profileUrl: photo ?? null },
     params: { id: JSON.stringify(profileSucc.id) }
   }));
 
-  await to(createPersonalDetails({
+  if (createProfileImageErr) {
+    console.error('[BulkCreateProfile] Profile Image creation failed', createProfileImageErr.message);
+    return TE(createProfileImageErr.message);
+  }
+
+  const [createPersonalDetailsErr] = await to(createPersonalDetails({
     body: {
       heightId: heightData?.id ?? null,
       weightId: weightData?.id ?? null,
@@ -794,6 +821,11 @@ const BulkCreateProfile = async function (req) {
     },
     params: { id: JSON.stringify(profileSucc.id) }
   }));
+
+  if (createPersonalDetailsErr) {
+    console.error('[BulkCreateProfile] Personal Details creation failed', createPersonalDetailsErr.message);
+    return TE(createPersonalDetailsErr.message);
+  }
 
   console.log('[BulkCreateProfile] COMPLETED SUCCESSFULLY:', profileSucc.id);
 };

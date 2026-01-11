@@ -54,6 +54,9 @@ module.exports = (db, Sequelize) => {
       required: true,
       defaultValue: false
     },
+    profileCardUrl: {
+      type: Sequelize.STRING
+    },
     createdAt: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW

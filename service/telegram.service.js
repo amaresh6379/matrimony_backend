@@ -84,11 +84,10 @@ bot.on('callback_query', async (callbackQuery) => {
 
     if (data.startsWith('download_')) {
       const userId = data.split('_')[1];
-
       const req = {
         params: { id: userId }
       };
-
+      console.log('req', req);
       const [err, result] = await to(profileService.downloadProfile(req));
       if (err) {
         return bot.answerCallbackQuery(callbackQuery.id, {
