@@ -557,9 +557,11 @@ const downloadProfile = async (req) => {
       month: "2-digit",
       year: "numeric"
     });
-    console.log("userData", userData?.careerDetails?.[0]?.dataValues);
+    console.log("personal details",userData?.personalDetails?.[0]?.dataValues);
+    console.log("zodiac details", userData?.zodiacDetails?.[0]?.dataValues);
     particularUserDetail = {
       name: userData.name,
+      matrimonyId: userData.matrimonyId,
       gender: userData.gender,
       dob: readableDate,
       age: new Date().getFullYear() - new Date(userData.dob).getFullYear(),
@@ -576,12 +578,12 @@ const downloadProfile = async (req) => {
       motherName: userData?.parentDetails?.[0]?.dataValues?.motherName ?? '-',
       raasi: userData?.zodiacDetails?.[0]?.zodiac?.dataValues?.zodiacTamil ?? '-',
       nachathiram: userData?.zodiacDetails?.[0]?.star?.dataValues?.starTamil ?? '-',
+      paatham: userData?.zodiacDetails?.[0]?.dataValues?.patham ? userData?.zodiacDetails?.[0]?.dataValues?.patham + ' ஆம் பாதம்' : '-',
+      dosham: userData?.zodiacDetails?.[0]?.dataValues?.dosham ?? '-',
       assets: userData?.personalDetails?.[0]?.dataValues?.asset ?? '-',
-      expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-',
+      expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-', 
       photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
-      // jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/VCM202634.jpg`,
       jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/${userData.matrimonyId}.jpg`
-      // photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/VCM202634.jpg`
     };
 
     console.log("html", path.join(__dirname, 'profileCard.html'));
