@@ -162,7 +162,7 @@ const getOneProfileDetails = async (req) => {
   if (!id) return TE('Id is required');
   console.log('id', id);
   const [matchErr, matachData] = await to(Profile.findOne({
-    attributes: ['id','matrimonyId', 'name', 'gender', 'mobileNumber', 'dob', 'martialStatus', 'religion', 'nativePlace', 'districtId'],
+    attributes: ['id', 'matrimonyId', 'name', 'gender', 'mobileNumber', 'dob', 'martialStatus', 'religion', 'nativePlace', 'districtId'],
     where: {
       id: id,
       isDeleted: false,
@@ -469,10 +469,12 @@ async function generateProfileImage(htmlPath, data) {
   const page = await browser.newPage();
 
   let html = fs.readFileSync(htmlPath, 'utf8');
+  console.log("html", html);
 
   Object.keys(data).forEach((key) => {
     html = html.replaceAll(`{{${key}}}`, data[key] || '');
   });
+
 
   await page.setContent(html, { waitUntil: 'networkidle0' });
 
