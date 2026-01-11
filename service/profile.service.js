@@ -464,34 +464,43 @@ module.exports.getProfilePercentage = getProfilePercentage;
 async function generateProfileImage(htmlPath, data) {
   console.log("inside image geenrator html", htmlPath);
   console.log("inside image geenrator data", data);
+  try {
+    const browser = await puppeteer.launch({ headless: 'new' });
 
-  const browser = await puppeteer.launch({ headless: 'new' });
-  const page = await browser.newPage();
+    const page = await browser.newPage();
 
-  let html = fs.readFileSync(htmlPath, 'utf8');
-  console.log("html", html);
+    let html = fs.readFileSync(htmlPath, 'utf8');
+    console.log("html", html);
 
-  Object.keys(data).forEach((key) => {
-    html = html.replaceAll(`{{${key}}}`, data[key] || '');
-  });
+    Object.keys(data).forEach((key) => {
+      html = html.replaceAll(`{{${key}}}`, data[key] || '');
+    });
 
 
-  await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'networkidle0' });
 
-  await page.setViewport({
-    width: 794,
-    height: 930,
-    deviceScaleFactor: 2,
-  });
+    await page.setViewport({
+      width: 794,
+      height: 930,
+      deviceScaleFactor: 2,
+    });
 
-  // ⬇️ Return image as BUFFER
-  const imageBuffer = await page.screenshot({
-    type: 'png',
-    fullPage: true,
-  });
+    // ⬇️ Return image as BUFFER
+    const imageBuffer = await page.screenshot({
+      type: 'png',
+      fullPage: true,
+    });
 
-  await browser.close();
-  return imageBuffer;
+    await browser.close();
+    return imageBuffer;
+
+  }
+  catch (err) {
+    console.error('Error generating profile image:', err);
+
+  }
+
+
 }
 async function uploadImageBufferToS3(buffer, key) {
   await s3.send(
