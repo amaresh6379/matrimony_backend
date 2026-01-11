@@ -75,8 +75,8 @@ module.exports.createProfile = createProfile;
 
 
 const createPersonalDetails = async (req) => {
-  const { heightId, weightId, skinTone, foodOption, Intereqt, asset } = req.body;
-  const [personalDetailsErr, personalDetailsData] = await to(PersonalDetails.create({ heightId, weightId, skinTone, foodOption, Intereqt, asset, profileId: req.params.id }));
+  const { heightId, weightId, skinTone, foodOption, Interest, asset } = req.body;
+  const [personalDetailsErr, personalDetailsData] = await to(PersonalDetails.create({ heightId, weightId, skinTone, foodOption, Interest: Interest, asset, profileId: req.params.id }));
   if (personalDetailsErr) {
     return TE(personalDetailsErr.message);
   }
@@ -516,6 +516,24 @@ async function uploadImageBufferToS3(buffer, key) {
   return `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 }
 
+function calculateAge(dob) {
+  const birthDate = new Date(dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const hasBirthdayPassed =
+    today.getMonth() > birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() &&
+      today.getDate() >= birthDate.getDate());
+
+  if (!hasBirthdayPassed) {
+    age--;
+  }
+
+  return age;
+}
+
 
 const downloadProfile = async (req) => {
 
@@ -557,14 +575,14 @@ const downloadProfile = async (req) => {
       month: "2-digit",
       year: "numeric"
     });
-    console.log("personal details",userData?.personalDetails?.[0]?.dataValues);
+    console.log("personal details", userData?.personalDetails?.[0]?.dataValues);
     console.log("zodiac details", userData?.zodiacDetails?.[0]?.dataValues);
     particularUserDetail = {
       name: userData.name,
       matrimonyId: userData.matrimonyId,
       gender: userData.gender,
       dob: readableDate,
-      age: new Date().getFullYear() - new Date(userData.dob).getFullYear(),
+      age: calculateAge(userData.dob),
       maritalStatus: userData.martialStatus ?? '-',
       religion: userData.religion ?? '-',
       nativePlace: userData.nativePlace ?? '-',
@@ -573,6 +591,7 @@ const downloadProfile = async (req) => {
       profession: userData?.careerDetails?.[0]?.dataValues?.profession ?? '-',
       company: userData?.careerDetails?.[0]?.dataValues?.companyName ?? '-',
       salary: userData?.careerDetails?.[0]?.dataValues?.monthyIncome ?? '-',
+      workLocation: userData?.careerDetails?.[0]?.dataValues?.workLocation ?? '-',
       contact: contactDetails ?? '-',
       fatherName: userData?.parentDetails?.[0]?.dataValues?.fatherName ?? '-',
       motherName: userData?.parentDetails?.[0]?.dataValues?.motherName ?? '-',
@@ -580,8 +599,9 @@ const downloadProfile = async (req) => {
       nachathiram: userData?.zodiacDetails?.[0]?.star?.dataValues?.starTamil ?? '-',
       paatham: userData?.zodiacDetails?.[0]?.dataValues?.patham ? userData?.zodiacDetails?.[0]?.dataValues?.patham + ' ஆம் பாதம்' : '-',
       dosham: userData?.zodiacDetails?.[0]?.dataValues?.dosham ?? '-',
+      foodOption: userData?.personalDetails?.[0]?.dataValues?.foodOption ?? '-',
       assets: userData?.personalDetails?.[0]?.dataValues?.asset ?? '-',
-      expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-', 
+      expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-',
       photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
       jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/${userData.matrimonyId}.jpg`
     };
@@ -833,6 +853,7 @@ const BulkCreateProfile = async function (req) {
   }
 
   console.log('[BulkCreateProfile] Profile Image created');
+  console.log("")
   const [createPersonalDetailsErr] = await to(createPersonalDetails({
     body: {
       heightId: heightData?.id ?? null,
@@ -841,7 +862,7 @@ const BulkCreateProfile = async function (req) {
       foodOption:
         answers.q61_foodOption === 'அசைவம்' ? 'NONVEG' :
           answers.q61_foodOption === 'சைவம்' ? 'VEG' : 'SOMETIMES_NONVEG',
-      Intereqt: answers.q57_input57,
+      Interest: answers.q57_input57,
       asset: answers.q56_input56
     },
     params: { id: JSON.stringify(profileSucc.id) }
