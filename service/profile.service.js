@@ -464,15 +464,12 @@ module.exports.getProfilePercentage = getProfilePercentage;
 //   return outputPath;
 // }
 async function generateProfileImage(htmlPath, data) {
-  console.log("inside image geenrator html", htmlPath);
-  console.log("inside image geenrator data", data);
   try {
     const browser = await puppeteer.launch({ headless: 'new' });
 
     const page = await browser.newPage();
 
     let html = fs.readFileSync(htmlPath, 'utf8');
-    console.log("html", html);
 
     Object.keys(data).forEach((key) => {
       html = html.replaceAll(`{{${key}}}`, data[key] || '');
@@ -554,7 +551,6 @@ const downloadProfile = async (req) => {
         id: req.params.id
       }
     };
-    console.log("input", input);
     let [userErr, userData] = await to(getOneProfileDetails(input));
     if (userErr) {
       return TE(userErr.message);
@@ -609,18 +605,13 @@ const downloadProfile = async (req) => {
       photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
       jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/${userData.matrimonyId}.jpg`
     };
-
-    console.log("html", path.join(__dirname, 'profileCard.html'));
     console.log("particularUserDetail", particularUserDetail);
     const bufferData = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
-    console.log("bufferData", bufferData);
     const s3Url = await uploadImageBufferToS3(
       bufferData,
       `profile/profilecard/${userData.matrimonyId}.png`
     );
     if (s3Url) {
-      console.log("s3Url", s3Url);
-      console.log("userData.id", userData.id);
       const [updateUserErr, updateUserData] = await to(Profile.update({ profileCardUrl: s3Url }, { where: { id: userData.id } }));
       if (updateUserErr) {
         return TE(updateUserErr.message);
