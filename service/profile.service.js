@@ -633,13 +633,18 @@ function parseDOB_DDMMYYYY(dateStr) {
 
 const BulkCreateProfile = async function (req) {
   const profileData = req.body;
+  const files = req.files || {};
   let rawData = {};
+
+  /* -------------------- PARSE RAW DATA -------------------- */
   if (profileData.rawRequest) {
     try {
-      rawData = JSON.parse(profileData.rawRequest);
+      rawData = typeof profileData.rawRequest === 'string'
+        ? JSON.parse(profileData.rawRequest)
+        : profileData.rawRequest;
     } catch (err) {
-      console.error('[BulkCreateProfile] Invalid rawRequest JSON', err.message);
-      return;
+      console.error('[BulkCreateProfile] Invalid rawRequest JSON');
+      return TE('Invalid request format');
     }
   }
 
@@ -649,80 +654,44 @@ const BulkCreateProfile = async function (req) {
       answers[key] = normalizeValue(rawData[key]);
     }
   }
-  console.log('[BulkCreateProfile] Answers:', answers);
 
   /* -------------------- MASTER FETCHES -------------------- */
+  const [districtErr, districtData] = answers.q65_district
+    ? await to(District.findOne({ where: { districtName: answers.q65_district } }))
+    : [];
 
-  let districtErr, districtData;
-  if (answers.q65_district) {
-    console.log('[BulkCreateProfile] Fetching District:', answers.q65_district);
-    [districtErr, districtData] = await to(
-      District.findOne({ where: { districtName: answers.q65_district } })
-    );
-    if (districtErr) {
-      console.error('[BulkCreateProfile] District fetch error', districtErr.message);
-      return TE(districtErr.message);
-    }
-    console.log('[BulkCreateProfile] District found:', districtData?.id);
-  }
+  if (districtErr) return TE(districtErr.message);
 
-  let starErr, starData;
-  if (answers.q48_starnbsp) {
-    console.log('[BulkCreateProfile] Fetching Star:', answers.q48_starnbsp);
-    [starErr, starData] = await to(
-      Star.findOne({ where: { starTamil: answers.q48_starnbsp } })
-    );
-    if (starErr) {
-      console.error('[BulkCreateProfile] Star fetch error', starErr.message);
-      return TE(starErr.message);
-    }
-    console.log('[BulkCreateProfile] Star found:', starData?.id);
-  }
+  const [starErr, starData] = answers.q48_starnbsp
+    ? await to(Star.findOne({ where: { starTamil: answers.q48_starnbsp } }))
+    : [];
 
-  let zodiacErr, zodiacData;
-  if (answers.q47_zodiacnbsp) {
-    console.log('[BulkCreateProfile] Fetching Zodiac:', answers.q47_zodiacnbsp);
-    [zodiacErr, zodiacData] = await to(
-      Zodiac.findOne({ where: { zodiacTamil: answers.q47_zodiacnbsp } })
-    );
-    if (zodiacErr) {
-      console.error('[BulkCreateProfile] Zodiac fetch error', zodiacErr.message);
-      return TE(zodiacErr.message);
-    }
-    console.log('[BulkCreateProfile] Zodiac found:', zodiacData?.id);
-  }
+  if (starErr) return TE(starErr.message);
 
-  let weightErr, weightData;
-  if (answers.q74_weight) {
-    console.log('[BulkCreateProfile] Fetching Weight:', answers.q74_weight);
-    [weightErr, weightData] = await to(
-      Weight.findOne({ where: { weightName: answers.q74_weight } })
-    );
-    if (weightErr) {
-      console.error('[BulkCreateProfile] Weight fetch error', weightErr.message);
-      return TE(weightErr.message);
-    }
-  }
+  const [zodiacErr, zodiacData] = answers.q47_zodiacnbsp
+    ? await to(Zodiac.findOne({ where: { zodiacTamil: answers.q47_zodiacnbsp } }))
+    : [];
 
-  let heightErr, heightData;
-  if (answers.q73_height) {
-    console.log('[BulkCreateProfile] Fetching Height:', answers.q73_height);
-    [heightErr, heightData] = await to(
-      Height.findOne({ where: { heightName: answers.q73_height } })
-    );
-    if (heightErr) {
-      console.error('[BulkCreateProfile] Height fetch error', heightErr.message);
-      return TE(heightErr.message);
-    }
-  }
+  if (zodiacErr) return TE(zodiacErr.message);
+
+  const [heightErr, heightData] = answers.q73_height
+    ? await to(Height.findOne({ where: { heightName: answers.q73_height } }))
+    : [];
+
+  if (heightErr) return TE(heightErr.message);
+
+  const [weightErr, weightData] = answers.q74_weight
+    ? await to(Weight.findOne({ where: { weightName: answers.q74_weight } }))
+    : [];
+
+  if (weightErr) return TE(weightErr.message);
 
   /* -------------------- PROFILE CREATE -------------------- */
-
-  const profileDetails = {
+  const [profileErr, profileSucc] = await to(createProfile({
     body: {
       gender: answers.q36_gender?.toUpperCase(),
       name: answers.q64_name,
-      dob: parseDOB_DDMMYYYY(answers.q25_date),
+      dob: answers.q25_date ? parseDOB_DDMMYYYY(answers.q25_date) : null,
       mobileNumber: answers.q72_mobileNumber72?.replace(/\D/g, ''),
       password: 'Admin@123',
       martialStatus: answers.q34_martialStatus?.toUpperCase(),
@@ -730,40 +699,23 @@ const BulkCreateProfile = async function (req) {
       nativePlace: answers.q28_typeA,
       districtId: districtData?.id ?? null
     }
-  };
+  }));
 
-  const [profileErr, profileSucc] = await to(createProfile(profileDetails));
-  if (profileErr) {
-    console.error('[BulkCreateProfile] Profile creation failed', profileErr.message);
-    return TE(profileErr.message);
-  }
+  if (profileErr || !profileSucc?.id) return TE(profileErr?.message);
 
-  if (!profileSucc?.id) {
-    console.warn('[BulkCreateProfile] Profile ID missing, aborting');
-    return;
-  }
-
-
-
-  const careerDetails = {
+  /* -------------------- CAREER & FAMILY -------------------- */
+  await to(createCareerDetails({
     body: {
       educationDetails: [answers.q38_education],
       profession: answers.q39_profession ?? null,
       companyName: answers.q40_company ?? null,
-      monthyIncome: answers.q41_monthlyIncome ? answers.q41_monthlyIncome : 0,
+      monthyIncome: answers.q41_monthlyIncome ?? 0,
       workLocation: answers.q42_workLocation ?? null
     },
     params: { id: JSON.stringify(profileSucc.id) }
-  };
+  }));
 
-  const [careerErr] = await to(createCareerDetails(careerDetails));
-  if (careerErr) {
-    console.error('[BulkCreateProfile] Career creation failed', careerErr.message);
-    return TE(careerErr.message);
-  }
-
-
-  const familyDetails = {
+  await to(createFamilyDetails({
     body: {
       fatherName: answers.q45_fathersName ?? null,
       motherName: answers.q31_mothersName ?? null,
@@ -772,19 +724,19 @@ const BulkCreateProfile = async function (req) {
       contactPersonType: answers.q54_typeA54 ?? null
     },
     params: { id: JSON.stringify(profileSucc.id) }
-  };
+  }));
 
-  const [familyErr] = await to(createFamilyDetails(familyDetails));
-  if (familyErr) {
-    console.error('[BulkCreateProfile] Family creation failed', familyErr.message);
-    return TE(familyErr.message);
-  }
-
-
-
+  /* -------------------- HYBRID IMAGE UPLOAD -------------------- */
   let jathamImage, photo;
 
-  if (rawData?.jathamImage?.[0]) {
+  // Jatham Image
+  if (files.jathamImage?.[0]) {
+    jathamImage = await uploadImageFromFile(
+      files.jathamImage[0],
+      'profile/jathagamimage',
+      profileSucc.matrimonyId
+    );
+  } else if (rawData?.jathamImage?.[0]) {
     jathamImage = await uploadImageFromUrl(
       rawData.jathamImage[0],
       'profile/jathagamimage',
@@ -792,8 +744,14 @@ const BulkCreateProfile = async function (req) {
     );
   }
 
-  if (rawData?.photo?.[0]) {
-    console.log('[BulkCreateProfile] Uploading Profile Image');
+  // Profile Photo
+  if (files.photo?.[0]) {
+    photo = await uploadImageFromFile(
+      files.photo[0],
+      'profile/profileimage',
+      profileSucc.matrimonyId
+    );
+  } else if (rawData?.photo?.[0]) {
     photo = await uploadImageFromUrl(
       rawData.photo[0],
       'profile/profileimage',
@@ -801,9 +759,8 @@ const BulkCreateProfile = async function (req) {
     );
   }
 
-
-
-  const [zodiacDetailsErr, zodiacDetailsData] = await to(createZodiacDetails({
+  /* -------------------- DETAILS UPDATE -------------------- */
+  await to(createZodiacDetails({
     body: {
       zodiacId: zodiacData?.id ?? null,
       starId: starData?.id ?? null,
@@ -814,25 +771,12 @@ const BulkCreateProfile = async function (req) {
     params: { id: JSON.stringify(profileSucc.id) }
   }));
 
-  if (zodiacDetailsErr) {
-    console.error('[BulkCreateProfile] Zodiac creation failed', zodiacDetailsErr.message);
-    return TE(zodiacDetailsErr.message);
-  }
-
-  console.log('[BulkCreateProfile] Zodiac created');
-
-  const [createProfileImageErr] = await to(createProfileImage({
+  await to(createProfileImage({
     body: { profileUrl: photo?.url ?? null },
     params: { id: JSON.stringify(profileSucc.id) }
   }));
 
-  if (createProfileImageErr) {
-    console.error('[BulkCreateProfile] Profile Image creation failed', createProfileImageErr.message);
-    return TE(createProfileImageErr.message);
-  }
-
-  console.log('[BulkCreateProfile] Profile Image created');
-  const [createPersonalDetailsErr] = await to(createPersonalDetails({
+  await to(createPersonalDetails({
     body: {
       heightId: heightData?.id ?? null,
       weightId: weightData?.id ?? null,
@@ -846,13 +790,9 @@ const BulkCreateProfile = async function (req) {
     params: { id: JSON.stringify(profileSucc.id) }
   }));
 
-  if (createPersonalDetailsErr) {
-    console.error('[BulkCreateProfile] Personal Details creation failed', createPersonalDetailsErr.message);
-    return TE(createPersonalDetailsErr.message);
-  }
-
-  console.log('[BulkCreateProfile] COMPLETED SUCCESSFULLY:', profileSucc.id);
+  console.log('✅ BulkCreateProfile COMPLETED:', profileSucc.id);
 };
+
 
 
 
@@ -893,78 +833,53 @@ function normalizeValue(value) {
 
 
 
+// URL-based upload (JotForm)
 async function uploadImageFromUrl(source, folder, profileId) {
-  if (!source) {
-    console.warn('Source is empty');
-    return null;
-  }
+  if (!source) return null;
 
-  let response;
-  let extension;
+  const response = await axios.get(source, {
+    responseType: 'arraybuffer',
+    timeout: 20000,
+    headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'image/*' }
+  });
 
-  try {
-    response = await axios.get(source, {
-      responseType: 'arraybuffer', // <-- consume full response as buffer
-      timeout: 20000,
-      maxRedirects: 5,
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        Accept: 'image/*',
-      },
-    });
+  const contentType = response.headers['content-type'];
+  const extension = contentType?.startsWith('image/')
+    ? contentType.split('/')[1]
+    : 'jpg';
 
-    const disposition = response.headers['content-disposition'];
-    if (disposition && disposition.includes('filename=')) {
-      const matches = disposition.match(/filename="?(.+?)"?$/);
-      if (matches && matches[1]) {
-        const filename = matches[1];
-        extension = filename.split('.').pop();
-      }
-    }
+  const key = `${folder}/${profileId}.${extension}`;
 
-    if (!extension) {
-      const contentType = response.headers['content-type'];
-      if (contentType && contentType.startsWith('image/')) {
-        extension = contentType.split('/')[1];
-      } else {
-        throw new Error('Cannot determine file extension');
-      }
-    }
-    const key = `${folder}/${profileId}.${extension}`;
+  await s3.send(new PutObjectCommand({
+    Bucket: CONFIG.AWS_BUCKET,
+    Key: key,
+    Body: Buffer.from(response.data),
+    ContentType: contentType
+  }));
 
-    const uploadParams = {
-      Bucket: CONFIG.AWS_BUCKET,
-      Key: key,
-      Body: Buffer.from(response.data), // <-- full buffer
-      ContentType: response.headers['content-type'] || 'application/octet-stream',
-    };
+  return {
+    key,
+    url: `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`
+  };
+}
+// FILE-based upload (Angular)
+async function uploadImageFromFile(file, folder, profileId) {
+  if (!file) return null;
 
-    try {
-      const s3Result = await s3.send(new PutObjectCommand(uploadParams));
-      console.log('✅ S3 Upload Success:', s3Result);
-    } catch (s3Err) {
-      console.error('🔥 S3 upload failed');
-      console.error('Message:', s3Err.message);
-      console.error('Code:', s3Err.code);
-      console.error('HTTP Status:', s3Err.$metadata?.httpStatusCode);
-      console.error('Request ID:', s3Err.$metadata?.requestId);
-      throw s3Err;
-    }
+  const extension = file.originalname.split('.').pop() || 'jpg';
+  const key = `${folder}/${profileId}.${extension}`;
 
-    const finalUrl = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`;
-    console.log('✅ Upload successful:', finalUrl);
+  await s3.send(new PutObjectCommand({
+    Bucket: CONFIG.AWS_BUCKET,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype
+  }));
 
-    return { key, url: finalUrl };
-  } catch (err) {
-    console.error('🔥 uploadImageFromUrl FAILED');
-    console.error('Message:', err.message);
-    if (err.response) {
-      console.error('HTTP Status:', err.response.status);
-      console.error('Response headers:', err.response.headers);
-    }
-    console.log('================ FAILED uploadImageFromUrl ================');
-    throw err;
-  }
+  return {
+    key,
+    url: `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`
+  };
 }
 
 
