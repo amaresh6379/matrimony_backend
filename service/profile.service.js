@@ -25,7 +25,8 @@ const s3 = new S3Client({
   credentials: {
     accessKeyId: CONFIG.AWS_ACCESS_KEY,
     secretAccessKey: CONFIG.AWS_SECRET_KEY
-  }
+  },
+  requestChecksumCalculation: "WHEN_REQUIRED"   // ← add this line
 });
 
 
