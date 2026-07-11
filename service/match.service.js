@@ -4,6 +4,7 @@ const ZodiacDetails = require('../models').zodiacDetails;
 const Zodiac = require('../models').zodiac;
 const Star = require('../models').star;
 const ProfileInterset = require('../models').profileInterset;
+const ProfileImage = require('../models').profileImage;
 require('../global_function');
 const { Op, where } = require("sequelize");
 const { off } = require('..');
