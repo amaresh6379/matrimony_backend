@@ -88,6 +88,15 @@ const getMatchingList = async (req) => {
             }
           ],
           required: (zodiacWhereCondition.zodiacId || zodiacWhereCondition.starId) ? true : false
+        },
+        {
+          model: ProfileImage,
+          attributes: ['profileUrl'],
+          required: false,
+          where: {
+            isMain: true,
+            isDeleted: false
+          }
         }
       ],
       order: [
