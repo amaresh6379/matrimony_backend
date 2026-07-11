@@ -59,6 +59,14 @@ const createProfileImage = async (req, res) => {
 
 
 
+const getPresignedUrl = async (req, res) => {
+  const [err, data] = await to(profileService.getPresignedUrl(req));
+  if (err) {
+    return ReE(res, Object.assign({ success: false }, { details: err.message }), 422);
+  }
+  return ReS(res, { result: data }, 200);
+}
+
 // Token endpoint
 
 const getOneProfileDetails = async (req, res) => {
@@ -162,6 +170,7 @@ router.post('/:id/profileImage', createProfileImage);
 
 
 // token endpoints
+router.get('/signed-url', getPresignedUrl);
 router.get('/:id', verifyToken, getOneProfileDetails);
 router.put('/:id', verifyToken, updateProfileDetails);
 router.put('/:id/profileImage', verifyToken, updateProfileImage);

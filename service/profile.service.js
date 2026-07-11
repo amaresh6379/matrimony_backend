@@ -17,6 +17,7 @@ const path = require("path");
 const axios = require('axios');
 const fs = require('fs');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 
 const s3 = new S3Client({
@@ -882,9 +883,22 @@ async function uploadImageFromFile(file, folder, profileId) {
   };
 }
 
+const getPresignedUrl = async (req) => {
+  const { folder, fileName, contentType } = req.query;
+  if (!folder || !fileName || !contentType) {
+    return TE('folder, fileName, and contentType are required');
+  }
+  const key = `${folder}/${fileName}`;
+  const command = new PutObjectCommand({
+    Bucket: CONFIG.AWS_BUCKET,
+    Key: key,
+    ContentType: contentType
+  });
 
+  const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+  const publicUrl = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`;
+  return { signedUrl, publicUrl };
+};
 
-
-
-
+module.exports.getPresignedUrl = getPresignedUrl;
 module.exports.BulkCreateProfile = BulkCreateProfile;
