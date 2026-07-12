@@ -113,6 +113,108 @@ const getMatchingList = async (req) => {
 }
 
 
+const getProfileList = async (req) => {
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
+  const filterData = req.query.filterData
+    ? JSON.parse(req.query.filterData)
+    : null;
+  let zodiacWhereCondition = {};
+  let profileWhereCondition = {
+    isDeleted: false,
+    isActive: true
+  };
+
+  // Filters
+  if (filterData) {
+
+    if (filterData.zodiacId) {
+      zodiacWhereCondition.zodiacId = filterData.zodiacId;
+    }
+
+    if (filterData.starId) {
+      zodiacWhereCondition.starId = filterData.starId;
+    }
+
+    if (filterData.fromAge && filterData.toAge) {
+      const today = new Date();
+
+      const minDOB = new Date(
+        today.getFullYear() - filterData.toAge,
+        today.getMonth(),
+        today.getDate()
+      );
+
+      const maxDOB = new Date(
+        today.getFullYear() - filterData.fromAge,
+        today.getMonth(),
+        today.getDate()
+      );
+
+      profileWhereCondition.dob = {
+        [Op.between]: [minDOB, maxDOB]
+      };
+    }
+
+    if (filterData.maritalStatus) {
+      profileWhereCondition.martialStatus = filterData.maritalStatus;
+    }
+
+    if (filterData.districtId) {
+      profileWhereCondition.districtId = filterData.districtId;
+    }
+  }
+  const [matchErr, matachData] = await to(Profile.findAll(
+    {
+      attributes: ['id', 'matrimonyId', 'name', 'gender', 'dob', 'martialStatus', 'religion', 'nativePlace', 'createdAt', 'districtId'],
+      where: profileWhereCondition,
+      include: [
+        {
+          model: CareerDetails,
+          attributes: ['educationDetails', 'profession', 'companyName', 'monthyIncome'],
+          required: false
+        },
+        {
+          model: ZodiacDetails,
+          attributes: ['id'],
+          where: zodiacWhereCondition,
+          include: [
+            {
+              model: Zodiac,
+              attributes: ['zodiacTamil'],
+              required: false
+            },
+            {
+              model: Star,
+              attributes: ['starTamil'],
+              required: false
+            }
+          ],
+          required: (zodiacWhereCondition.zodiacId || zodiacWhereCondition.starId) ? true : false
+        },
+        {
+          model: ProfileImage,
+          attributes: ['profileUrl'],
+          required: false,
+          where: {
+            isMain: true,
+            isDeleted: false
+          }
+        }
+      ],
+      order: [
+        ['created_at', 'DESC']
+      ],
+      limit: limit,
+      offset: offset
+    }));
+  if (matchErr) {
+    return TE(matchErr.message);
+  }
+  return matachData;
+}
+
+
 const sendInterset = async (req) => {
   const id = req?.user?.id;
   const interestId = req?.query?.interestId;
@@ -286,5 +388,6 @@ module.exports = {
   getMatchingList,
   sendInterset,
   getSentLikes,
-  getReceivedLikes
+  getReceivedLikes,
+  getProfileList
 }

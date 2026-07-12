@@ -13,6 +13,14 @@ const getMatchingList = async (req, res) => {
 };
 
 
+const getProfileList = async (req, res) => {
+  const [matchErr, matachData] = await to(matchService.getProfileList(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+};
+
 const sendInterset = async (req, res) => {
   const [matchErr, matachData] = await to(matchService.sendInterset(req));
   if (matchErr) {
@@ -40,6 +48,7 @@ const getReceivedLikes = async (req, res) => {
 };
 
 router.get('/', verifyToken, getMatchingList);
+router.get('/profile-list', getProfileList);
 router.put('/:id', verifyToken, sendInterset);
 router.get('/:id/sent', verifyToken, getSentLikes);
 router.get('/:id/received', verifyToken, getReceivedLikes);
