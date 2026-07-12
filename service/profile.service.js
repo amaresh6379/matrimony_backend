@@ -162,7 +162,7 @@ module.exports.createProfileImage = createProfileImage;
 
 
 const getOneProfileDetails = async (req) => {
-  const id = req?.user?.id;
+  const id = req?.params?.id;
   if (!id) return TE('Id is required');
   console.log('id', id);
   const [matchErr, matachData] = await to(Profile.findOne({
