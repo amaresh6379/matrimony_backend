@@ -1,6 +1,7 @@
 const Profile = require('../models').profile;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 require("../global_function");
 const MAX_FAILED = 5;
 const LOCK_MINUTES = 15;
