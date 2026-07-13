@@ -56,6 +56,10 @@ const getPresignedUrl = async (req, res) => {
   return ReS(res, { result: data }, 200);
 }
 
+const getHealth = async (req, res) => {
+  return ReS(res, { status: 'UP', message: 'Backend is running' }, 200);
+}
+
 
 router.get('/district', getDistrict);
 router.get('/star', getStar);
@@ -63,11 +67,13 @@ router.get('/zodiac', getZodiac);
 router.get('/weight', getWeight);
 router.get('/height', getHeight);
 router.post('/presignedUrl', getPresignedUrl);
+router.get('/health', getHealth);
 
 module.exports = {
   router,
   getDistrict,
   getStar,
   getZodiac,
-  getPresignedUrl
+  getPresignedUrl,
+  getHealth
 };

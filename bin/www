@@ -80,9 +80,7 @@ function onError(error) {
   }
 }
 
-/**
- * Event listener for HTTP server "listening" event.
- */
+const https = require('https');
 
 function onListening() {
   var addr = server.address();
@@ -90,4 +88,21 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+
+  // Start self-pinging to prevent Render from sleeping (cold start problem)
+  const HEALTH_URL = process.env.HEALTH_CHECK_URL || 'https://matrimony-backend-gfze.onrender.com/v1/health';
+
+  const pingSelf = () => {
+    https.get(HEALTH_URL, (res) => {
+      console.log(`[Self-Ping] Status is ${res.statusCode}`);
+    }).on('error', (err) => {
+      console.error(`[Self-Ping] Request failed: ${err.message}`);
+    });
+  };
+
+  // Ping once after 10 seconds of startup
+  setTimeout(pingSelf, 10000);
+
+  // Ping every 2 minutes
+  setInterval(pingSelf, 120000);
 }
