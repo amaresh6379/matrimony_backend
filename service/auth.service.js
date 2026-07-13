@@ -49,7 +49,7 @@ const verifyUserLogin = async (req) => {
       ]
     }
   }));
-
+  console.log("user", user);
   if (err || !user) {
     return { success: false, status: 'INVALID' };
   }
