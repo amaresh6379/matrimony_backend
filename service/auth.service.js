@@ -21,7 +21,11 @@ async function generateToken(userDetails) {
 }
 
 const verifyUserLogin = async (req) => {
-  const { matrimonyId, password } = req.body;
+  const { matrimonyId, password } = req.body;   // matrimonyId here can be either matrimonyId or mobileNumber
+
+  if (!matrimonyId || !password) {
+    return { success: false, status: 'INVALID' };
+  }
 
   const [err, user] = await to(Profile.findOne({
     attributes: [
@@ -36,7 +40,13 @@ const verifyUserLogin = async (req) => {
       'failedAttempts',
       'lockedUntil'
     ],
-    where: { matrimonyId, isDeleted: false }
+    where: {
+      isDeleted: false,
+      [Op.or]: [
+        { matrimonyId: matrimonyId },
+        { mobileNumber: matrimonyId }   // Allow login with mobile number too
+      ]
+    }
   }));
 
   if (err || !user) {
@@ -55,9 +65,7 @@ const verifyUserLogin = async (req) => {
     const update = { failedAttempts: attempts };
 
     if (attempts >= MAX_FAILED) {
-      update.lockedUntil = new Date(
-        Date.now() + LOCK_MINUTES * 60 * 1000
-      );
+      update.lockedUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000);
       update.failedAttempts = 0;
     }
 
@@ -74,6 +82,7 @@ const verifyUserLogin = async (req) => {
     return { success: false, status: 'EXPIRED' };
   }
 
+  // Reset failed attempts on successful login
   await Profile.update(
     { failedAttempts: 0, lockedUntil: null, lastLoginAt: new Date() },
     { where: { id: user.id } }
