@@ -905,9 +905,8 @@ module.exports.getPresignedUrl = getPresignedUrl;
 module.exports.BulkCreateProfile = BulkCreateProfile;
 
 const updateJathagamImage = async (req) => {
-  const { id } = req.params;
   const { jathagamImage } = req.body;
-  const [updateErr, updateData] = await to(Profile.update({ jathagamImage }, { where: { id } }));
+  const [updateErr, updateData] = await to(Profile.update({ jathagamImage }, { where: { profileId: req?.user?.id } }));
   if (updateErr) {
     return TE(updateErr.message);
   }
