@@ -901,6 +901,17 @@ const getPresignedUrl = async (req) => {
   const publicUrl = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/${key}`;
   return { signedUrl, publicUrl };
 };
-
 module.exports.getPresignedUrl = getPresignedUrl;
 module.exports.BulkCreateProfile = BulkCreateProfile;
+
+const updateJathagamImage = async (req) => {
+  const { id } = req.params;
+  const { jathagamImage } = req.body;
+  const [updateErr, updateData] = await to(Profile.update({ jathagamImage }, { where: { id } }));
+  if (updateErr) {
+    return TE(updateErr.message);
+  }
+  return updateData;
+}
+module.exports.updateJathagamImage = updateJathagamImage;
+

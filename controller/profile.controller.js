@@ -158,6 +158,14 @@ const BulkCreateProfile = async (req, res) => {
   return ReS(res, { result: createSucc }, 200);
 }
 
+const updateJathagamImage = async (req, res) => {
+  const [matchErr, matachData] = await to(profileService.updateJathagamImage(req));
+  if (matchErr) {
+    return ReE(res, Object.assign({ success: false }, { details: matchErr.message }), 422);
+  }
+  return ReS(res, { result: matachData }, 200);
+}
+
 
 router.post('/form', upload.any(), BulkCreateProfile);
 router.post('/', createProfile);
@@ -174,6 +182,7 @@ router.get('/signed-url', getPresignedUrl);
 router.get('/:id', verifyToken, getOneProfileDetails);
 router.put('/:id', verifyToken, updateProfileDetails);
 router.put('/:id/profileImage', verifyToken, updateProfileImage);
+router.put('/:id/jathagamImage', verifyToken, updateJathagamImage);
 router.put('/:id/personal', verifyToken, updatePersonalDetails);
 router.put('/:id/career', verifyToken, updateCareerDetails);
 router.put('/:id/family', verifyToken, updateFamilyDetails);
