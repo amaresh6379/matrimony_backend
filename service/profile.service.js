@@ -194,12 +194,12 @@ const getOneProfileDetails = async (req) => {
         include: [
           {
             model: Zodiac,
-            attributes: ['zodiacTamil'],
+            attributes: ['zodiacTamil', 'id'],
             required: false
           },
           {
             model: Star,
-            attributes: ['starTamil'],
+            attributes: ['starTamil', 'id'],
             required: false
           }
         ],
