@@ -893,7 +893,8 @@ const getPresignedUrl = async (req) => {
   const command = new PutObjectCommand({
     Bucket: CONFIG.AWS_BUCKET,
     Key: key,
-    ContentType: contentType
+    ContentType: contentType,
+    CacheControl: 'no-cache, must-revalidate'
   });
 
   const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
