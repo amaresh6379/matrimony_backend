@@ -347,7 +347,6 @@ const updateZodiacDetails = async (req) => {
     const updateZodiacDetails = {
       patham: req.body.patham,
       dosham: req.body.dosham,
-      jathgamImage: req.body.jathgamImage,
       zodiacId: req.body.zodiacId,
       starId: req.body.starId
     };
