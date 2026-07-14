@@ -190,7 +190,7 @@ const getOneProfileDetails = async (req) => {
       },
       {
         model: ZodiacDetails,
-        attributes: ['id', 'patham', 'dosham', 'jathgamImage'],
+        attributes: ['id', 'zodiacId', 'starId', 'patham', 'dosham', 'jathgamImage'],
         include: [
           {
             model: Zodiac,
@@ -934,11 +934,31 @@ module.exports.BulkCreateProfile = BulkCreateProfile;
 
 const updateJathagamImage = async (req) => {
   const { jathagamImage } = req.body;
-  const [updateErr, updateData] = await to(Profile.update({ jathagamImage }, { where: { profileId: req?.user?.id } }));
-  if (updateErr) {
-    return TE(updateErr.message);
+  const profileId = req?.user?.id;
+  if (!profileId) {
+    return TE("User ID is required");
   }
-  return updateData;
+
+  const [findErr, existingZodiac] = await to(ZodiacDetails.findOne({ where: { profileId } }));
+  if (findErr) {
+    return TE(findErr.message);
+  }
+
+  let data;
+  if (existingZodiac) {
+    const [updateErr, updateResult] = await to(existingZodiac.update({ jathgamImage: jathagamImage }));
+    if (updateErr) {
+      return TE(updateErr.message);
+    }
+    data = updateResult;
+  } else {
+    const [createErr, createResult] = await to(ZodiacDetails.create({ jathgamImage: jathgamImage, profileId }));
+    if (createErr) {
+      return TE(createErr.message);
+    }
+    data = createResult;
+  }
+  return data;
 }
 module.exports.updateJathagamImage = updateJathagamImage;
 
