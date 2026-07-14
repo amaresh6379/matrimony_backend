@@ -266,16 +266,29 @@ module.exports.updateProfileDetails = updateProfileDetails;
 
 const updateProfileImage = async (req) => {
   if (req?.body) {
-    const updateProfileImage = {
+    const profileId = req.user.id;
+    const updateData = {
       profileUrl: req.body.profileUrl,
-      isMain: true
+      isMain: true,
+      profileId: profileId
     };
-    const [updateErr, updateData] = await to(ProfileImage.update(updateProfileImage, { where: { profileId: req.user.id } }));
-    if (updateErr) {
-      return TE(updateErr.message);
+    const [findErr, existingImage] = await to(ProfileImage.findOne({ where: { profileId } }));
+    if (findErr) {
+      return TE(findErr.message);
     }
-    return updateData;
-
+    if (existingImage) {
+      const [updateErr, result] = await to(existingImage.update(updateData));
+      if (updateErr) {
+        return TE(updateErr.message);
+      }
+      return result;
+    } else {
+      const [createErr, result] = await to(ProfileImage.create(updateData));
+      if (createErr) {
+        return TE(createErr.message);
+      }
+      return result;
+    }
   }
 }
 module.exports.updateProfileImage = updateProfileImage;
@@ -283,21 +296,34 @@ module.exports.updateProfileImage = updateProfileImage;
 
 const updateCareerDetails = async (req) => {
   if (req?.body) {
-    const updateCareerDetails = {
+    const profileId = req.user.id;
+    const updateData = {
       educationDetails: req.body.educationDetails,
       profession: req.body.profession,
       companyName: req.body.companyName,
       monthyIncome: req.body.monthyIncome,
       workLocation: req.body.workLocation,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      profileId: profileId
     };
-    const [updateErr, updateData] = await to(CareerDetails.update(updateCareerDetails, { where: { profileId: req.user.id } }));
-    if (updateErr) {
-      return TE(updateErr.message);
+    const [findErr, existingCareer] = await to(CareerDetails.findOne({ where: { profileId } }));
+    if (findErr) {
+      return TE(findErr.message);
     }
-    return updateData;
+    if (existingCareer) {
+      const [updateErr, result] = await to(existingCareer.update(updateData));
+      if (updateErr) {
+        return TE(updateErr.message);
+      }
+      return result;
+    } else {
+      const [createErr, result] = await to(CareerDetails.create(updateData));
+      if (createErr) {
+        return TE(createErr.message);
+      }
+      return result;
+    }
   }
-
 };
 
 module.exports.updateCareerDetails = updateCareerDetails;
@@ -357,19 +383,32 @@ module.exports.updateFamilyDetails = updateFamilyDetails;
 
 const updateZodiacDetails = async (req) => {
   if (req?.body) {
-    const updateZodiacDetails = {
+    const profileId = req.user.id;
+    const updateData = {
       patham: req.body.patham,
       dosham: req.body.dosham,
       zodiacId: req.body.zodiacId,
-      starId: req.body.starId
+      starId: req.body.starId,
+      profileId: profileId
     };
-    const [updateErr, updateData] = await to(ZodiacDetails.update(updateZodiacDetails, { where: { profileId: req.user.id } }));
-    if (updateErr) {
-      return TE(updateErr.message);
+    const [findErr, existingZodiac] = await to(ZodiacDetails.findOne({ where: { profileId } }));
+    if (findErr) {
+      return TE(findErr.message);
     }
-    return updateData;
+    if (existingZodiac) {
+      const [updateErr, result] = await to(existingZodiac.update(updateData));
+      if (updateErr) {
+        return TE(updateErr.message);
+      }
+      return result;
+    } else {
+      const [createErr, result] = await to(ZodiacDetails.create(updateData));
+      if (createErr) {
+        return TE(createErr.message);
+      }
+      return result;
+    }
   }
-
 }
 
 module.exports.updateZodiacDetails = updateZodiacDetails;
@@ -377,19 +416,33 @@ module.exports.updateZodiacDetails = updateZodiacDetails;
 
 const updatePersonalDetails = async (req) => {
   if (req?.body) {
-    const updatePersonalDetails = {
+    const profileId = req.user.id;
+    const updateData = {
       skinTone: req.body.skinTone,
       foodOption: req.body.foodOption,
-      Interest: req.body.interest,
+      Interest: req.body.Interest || req.body.interest,
       weightId: req.body.weightId,
       heightId: req.body.heightId,
-      asset: req.body.asset
+      asset: req.body.asset,
+      profileId: profileId
     };
-    const [updateErr, updateData] = await to(PersonalDetails.update(updatePersonalDetails, { where: { profileId: req.user.id } }));
-    if (updateErr) {
-      return TE(updateErr.message);
+    const [findErr, existingPersonal] = await to(PersonalDetails.findOne({ where: { profileId } }));
+    if (findErr) {
+      return TE(findErr.message);
     }
-    return updateData;
+    if (existingPersonal) {
+      const [updateErr, result] = await to(existingPersonal.update(updateData));
+      if (updateErr) {
+        return TE(updateErr.message);
+      }
+      return result;
+    } else {
+      const [createErr, result] = await to(PersonalDetails.create(updateData));
+      if (createErr) {
+        return TE(createErr.message);
+      }
+      return result;
+    }
   }
 };
 module.exports.updatePersonalDetails = updatePersonalDetails;
