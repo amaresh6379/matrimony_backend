@@ -176,7 +176,7 @@ const getProfileList = async (req) => {
         },
         {
           model: ZodiacDetails,
-          attributes: ['id'],
+          attributes: ['id', 'dosham', 'patham'],
           where: zodiacWhereCondition,
           include: [
             {
