@@ -320,22 +320,35 @@ const updateFamilyDetails = async (req) => {
     marriedMale: req.body.marriedMale,
     marriedFemale: req.body.marriedFemale,
     updatedAt: new Date(),
-    // Make sure profileId is included for creation
     profileId: profileId
   };
 
-  // Option 1: Using upsert (Recommended - cleanest)
-  const [data, created] = await ParentDetails.upsert(familyData, {
-    returning: true,           // Returns the created/updated record
-  });
+  const [findErr, existingFamily] = await to(ParentDetails.findOne({ where: { profileId } }));
+  if (findErr) {
+    return TE(findErr.message);
+  }
 
-  if (!data) {
-    return TE("Failed to create or update family details");
+  let data;
+  let created = false;
+
+  if (existingFamily) {
+    const [updateErr, updateResult] = await to(existingFamily.update(familyData));
+    if (updateErr) {
+      return TE(updateErr.message);
+    }
+    data = updateResult;
+  } else {
+    const [createErr, createResult] = await to(ParentDetails.create(familyData));
+    if (createErr) {
+      return TE(createErr.message);
+    }
+    data = createResult;
+    created = true;
   }
 
   return {
     data,
-    created,   // true if new record was created, false if updated
+    created,
     message: created ? "Family details created successfully" : "Family details updated successfully"
   };
 };
