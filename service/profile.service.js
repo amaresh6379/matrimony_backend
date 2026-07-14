@@ -304,26 +304,41 @@ module.exports.updateCareerDetails = updateCareerDetails;
 
 
 const updateFamilyDetails = async (req) => {
-  if (req?.body) {
-    const updateParentDetails = {
-      fatherName: req.body.fatherName,
-      motherName: req.body.motherName,
-      fatherMobileNumber: req.body.fatherMobileNumber,
-      motherMobileNumber: req.body.motherMobileNumber,
-      siblingMale: req.body.siblingMale,
-      siblingFemale: req.body.siblingFemale,
-      marriedMale: req.body.marriedMale,
-      marriedFemale: req.body.marriedFemale,
-      updatedAt: new Date()
-    };
-    const [updateErr, updateData] = await to(ParentDetails.update(updateParentDetails, { where: { profileId: req.user.id } }));
-    if (updateErr) {
-      return TE(updateErr.message);
-    }
-    return updateData;
+  if (!req?.body || !req?.user?.id) {
+    return TE("Invalid request: Missing body or user ID");
   }
 
-}
+  const profileId = req.user.id;
+
+  const familyData = {
+    fatherName: req.body.fatherName,
+    motherName: req.body.motherName,
+    fatherMobileNumber: req.body.fatherMobileNumber,
+    motherMobileNumber: req.body.motherMobileNumber,
+    siblingMale: req.body.siblingMale,
+    siblingFemale: req.body.siblingFemale,
+    marriedMale: req.body.marriedMale,
+    marriedFemale: req.body.marriedFemale,
+    updatedAt: new Date(),
+    // Make sure profileId is included for creation
+    profileId: profileId
+  };
+
+  // Option 1: Using upsert (Recommended - cleanest)
+  const [data, created] = await ParentDetails.upsert(familyData, {
+    returning: true,           // Returns the created/updated record
+  });
+
+  if (!data) {
+    return TE("Failed to create or update family details");
+  }
+
+  return {
+    data,
+    created,   // true if new record was created, false if updated
+    message: created ? "Family details created successfully" : "Family details updated successfully"
+  };
+};
 module.exports.updateFamilyDetails = updateFamilyDetails;
 
 
