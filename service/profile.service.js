@@ -355,7 +355,8 @@ const updatePersonalDetails = async (req) => {
       foodOption: req.body.foodOption,
       Interest: req.body.interest,
       weightId: req.body.weightId,
-      heightId: req.body.heightId
+      heightId: req.body.heightId,
+      asset: req.body.asset
     };
     const [updateErr, updateData] = await to(PersonalDetails.update(updatePersonalDetails, { where: { profileId: req.user.id } }));
     if (updateErr) {
