@@ -16,7 +16,7 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const axios = require('axios');
 const fs = require('fs');
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 
@@ -28,6 +28,23 @@ const s3 = new S3Client({
   },
   requestChecksumCalculation: "WHEN_REQUIRED"   // ← add this line
 });
+
+const deleteS3ObjectByUrl = async (url) => {
+  if (!url) return;
+  try {
+    const s3Domain = `https://${CONFIG.AWS_BUCKET}.s3.${CONFIG.AWS_REGION}.amazonaws.com/`;
+    if (url.startsWith(s3Domain)) {
+      const key = url.replace(s3Domain, '').split('?')[0]; // Strip domain and query parameters if any
+      await s3.send(new DeleteObjectCommand({
+        Bucket: CONFIG.AWS_BUCKET,
+        Key: key
+      }));
+      console.log(`Deleted S3 object: ${key}`);
+    }
+  } catch (err) {
+    console.error(`Failed to delete S3 object: ${url}`, err);
+  }
+};
 
 
 require('../global_function');
@@ -277,6 +294,7 @@ const updateProfileImage = async (req) => {
       return TE(findErr.message);
     }
     if (existingImage) {
+      await deleteS3ObjectByUrl(existingImage.profileUrl);
       const [updateErr, result] = await to(existingImage.update(updateData));
       if (updateErr) {
         return TE(updateErr.message);
@@ -999,6 +1017,7 @@ const updateJathagamImage = async (req) => {
 
   let data;
   if (existingZodiac) {
+    await deleteS3ObjectByUrl(existingZodiac.jathgamImage);
     const [updateErr, updateResult] = await to(existingZodiac.update({ jathgamImage: jathagamImage }));
     if (updateErr) {
       return TE(updateErr.message);
