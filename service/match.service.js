@@ -25,6 +25,23 @@ const getMatchingList = async (req) => {
 
   // Filters
   if (filterData) {
+    if (filterData.searchQuery) {
+      profileWhereCondition[Op.or] = [
+        { name: { [Op.like]: `%${filterData.searchQuery}%` } },
+        { matrimonyId: { [Op.like]: `%${filterData.searchQuery}%` } }
+      ];
+    }
+
+    if (filterData.location) {
+      profileWhereCondition[Op.and] = [
+        {
+          [Op.or]: [
+            { nativePlace: { [Op.like]: `%${filterData.location}%` } },
+            { '$careerDetails.workLocation$': { [Op.like]: `%${filterData.location}%` } }
+          ]
+        }
+      ];
+    }
 
     if (filterData.zodiacId) {
       zodiacWhereCondition.zodiacId = filterData.zodiacId;
@@ -34,17 +51,29 @@ const getMatchingList = async (req) => {
       zodiacWhereCondition.starId = filterData.starId;
     }
 
-    if (filterData.fromAge && filterData.toAge) {
+    if (filterData.star) {
+      zodiacWhereCondition['$star.starTamil$'] = filterData.star;
+    }
+
+    if (filterData.dosham) {
+      zodiacWhereCondition.dosham = filterData.dosham;
+    }
+
+    const fromAge = filterData.fromAge || filterData.ageFrom;
+    const toAge = filterData.toAge || filterData.ageTo;
+    if (fromAge || toAge) {
       const today = new Date();
+      const minAge = toAge ? parseInt(toAge) : 100;
+      const maxAge = fromAge ? parseInt(fromAge) : 0;
 
       const minDOB = new Date(
-        today.getFullYear() - filterData.toAge,
+        today.getFullYear() - minAge - 1,
         today.getMonth(),
         today.getDate()
       );
 
       const maxDOB = new Date(
-        today.getFullYear() - filterData.fromAge,
+        today.getFullYear() - maxAge,
         today.getMonth(),
         today.getDate()
       );
@@ -62,7 +91,8 @@ const getMatchingList = async (req) => {
       profileWhereCondition.districtId = filterData.districtId;
     }
   }
-  const [matchErr, matachData] = await to(Profile.findAll(
+
+  const [matchErr, matachData] = await to(Profile.findAndCountAll(
     {
       attributes: ['id', 'matrimonyId', 'name', 'gender', 'dob', 'martialStatus', 'religion', 'nativePlace', 'createdAt', 'districtId'],
       where: profileWhereCondition,
@@ -88,7 +118,7 @@ const getMatchingList = async (req) => {
               required: false
             }
           ],
-          required: (zodiacWhereCondition.zodiacId || zodiacWhereCondition.starId) ? true : false
+          required: (zodiacWhereCondition.zodiacId || zodiacWhereCondition.starId || zodiacWhereCondition.dosham || zodiacWhereCondition['$star.starTamil$']) ? true : false
         },
         {
           model: ProfileImage,
@@ -104,12 +134,18 @@ const getMatchingList = async (req) => {
         ['created_at', 'DESC']
       ],
       limit: limit,
-      offset: offset
+      offset: offset,
+      distinct: true,
+      subQuery: false
     }));
+
   if (matchErr) {
     return TE(matchErr.message);
   }
-  return matachData;
+  return {
+    count: matachData.count,
+    rows: matachData.rows
+  };
 }
 
 
@@ -127,6 +163,23 @@ const getProfileList = async (req) => {
 
   // Filters
   if (filterData) {
+    if (filterData.searchQuery) {
+      profileWhereCondition[Op.or] = [
+        { name: { [Op.like]: `%${filterData.searchQuery}%` } },
+        { matrimonyId: { [Op.like]: `%${filterData.searchQuery}%` } }
+      ];
+    }
+
+    if (filterData.location) {
+      profileWhereCondition[Op.and] = [
+        {
+          [Op.or]: [
+            { nativePlace: { [Op.like]: `%${filterData.location}%` } },
+            { '$careerDetails.workLocation$': { [Op.like]: `%${filterData.location}%` } }
+          ]
+        }
+      ];
+    }
 
     if (filterData.zodiacId) {
       zodiacWhereCondition.zodiacId = filterData.zodiacId;
@@ -136,17 +189,29 @@ const getProfileList = async (req) => {
       zodiacWhereCondition.starId = filterData.starId;
     }
 
-    if (filterData.fromAge && filterData.toAge) {
+    if (filterData.star) {
+      zodiacWhereCondition['$star.starTamil$'] = filterData.star;
+    }
+
+    if (filterData.dosham) {
+      zodiacWhereCondition.dosham = filterData.dosham;
+    }
+
+    const fromAge = filterData.fromAge || filterData.ageFrom;
+    const toAge = filterData.toAge || filterData.ageTo;
+    if (fromAge || toAge) {
       const today = new Date();
+      const minAge = toAge ? parseInt(toAge) : 100;
+      const maxAge = fromAge ? parseInt(fromAge) : 0;
 
       const minDOB = new Date(
-        today.getFullYear() - filterData.toAge,
+        today.getFullYear() - minAge - 1,
         today.getMonth(),
         today.getDate()
       );
 
       const maxDOB = new Date(
-        today.getFullYear() - filterData.fromAge,
+        today.getFullYear() - maxAge,
         today.getMonth(),
         today.getDate()
       );
@@ -164,7 +229,8 @@ const getProfileList = async (req) => {
       profileWhereCondition.districtId = filterData.districtId;
     }
   }
-  const [matchErr, matachData] = await to(Profile.findAll(
+
+  const [matchErr, matachData] = await to(Profile.findAndCountAll(
     {
       attributes: ['id', 'matrimonyId', 'name', 'gender', 'dob', 'martialStatus', 'religion', 'nativePlace', 'createdAt', 'districtId'],
       where: profileWhereCondition,
@@ -190,7 +256,7 @@ const getProfileList = async (req) => {
               required: false
             }
           ],
-          required: (zodiacWhereCondition.zodiacId || zodiacWhereCondition.starId) ? true : false
+          required: (zodiacWhereCondition.zodiacId || zodiacWhereCondition.starId || zodiacWhereCondition.dosham || zodiacWhereCondition['$star.starTamil$']) ? true : false
         },
         {
           model: ProfileImage,
@@ -206,12 +272,18 @@ const getProfileList = async (req) => {
         ['created_at', 'DESC']
       ],
       limit: limit,
-      offset: offset
+      offset: offset,
+      distinct: true,
+      subQuery: false
     }));
+
   if (matchErr) {
     return TE(matchErr.message);
   }
-  return matachData;
+  return {
+    count: matachData.count,
+    rows: matachData.rows
+  };
 }
 
 
@@ -266,6 +338,7 @@ const getSentLikes = async (req) => {
         {
           model: Profile,
           attributes: [
+            "id",
             "matrimonyId",
             "name",
             "gender",
@@ -306,6 +379,15 @@ const getSentLikes = async (req) => {
                   required: false
                 }
               ]
+            },
+            {
+              model: ProfileImage,
+              attributes: ['profileUrl'],
+              required: false,
+              where: {
+                isMain: true,
+                isDeleted: false
+              }
             }
           ],
           order: [['created_at', 'DESC']]
@@ -332,6 +414,7 @@ const getReceivedLikes = async (req) => {
       {
         model: Profile,
         attributes: [
+          "id",
           "matrimonyId",
           "name",
           "gender",
@@ -372,6 +455,15 @@ const getReceivedLikes = async (req) => {
                 required: false
               }
             ]
+          },
+          {
+            model: ProfileImage,
+            attributes: ['profileUrl'],
+            required: false,
+            where: {
+              isMain: true,
+              isDeleted: false
+            }
           }
         ],
         order: [['created_at', 'DESC']]

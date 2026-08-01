@@ -4,62 +4,139 @@
 <head>
   <meta charset="UTF-8" />
   <title>Vaniyar Chettiyar Kalyana Malai</title>
-
-
   <style>
     body {
       margin: 0;
-      background: #f5f5f5;
-      font-family: "Times New Roman", serif;
+      background: #fff;
+      font-family: "Noto Serif Tamil", serif;
     }
 
     .page {
-      width: 210mm;
-      height: 300mm;
+      width: 794px;
       background: #fff;
-      margin: auto;
-      padding: 8mm 20mm 20mm 20mm;
+      padding: 6mm 14mm 5mm 14mm;
       border: 2px solid #000;
       box-sizing: border-box;
     }
 
-    /* HEADER */
+    /* ===== HEADER (taller, wider text area, logo on white badge so it stays visible on red) ===== */
+    .brand-band {
+      background: #b00000;
+      margin: -6mm -14mm 0 -14mm;
+      padding: 50px 10mm 30px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo-wrap {
+      flex-shrink: 0;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      box-shadow: 0 0 0 3px #ffd700;
+      box-sizing: border-box;
+    }
+
+    .brand-logo {
+      width: 200%;
+      height: 120%;
+      object-fit: contain;
+    }
+
+    .brand-text {
+      flex: 1;
+      min-width: 0;
+    }
+
     .title {
       text-align: center;
-      font-size: 28px;
+      font-size: 40px;
       font-weight: bold;
-      margin-bottom: 5px;
+      color: #fff;
+      margin-bottom: 3px;
+      letter-spacing: 0.2px;
     }
 
     .sub-title {
       text-align: center;
-      font-size: 12px;
-      margin-bottom: 10px;
+      font-size: 25px;
+      color: #ffe5e5;
+      margin-bottom: 0;
     }
 
-    .sub-header {
+    /* ===== WEBSITE / CONTACT — most prominent bar, right under the header ===== */
+    .info-bar {
       display: flex;
       justify-content: space-between;
-      font-size: 14px;
-      margin-bottom: 10px;
+      align-items: center;
+      margin: 0 -14mm 0 -14mm;
+      padding: 20px 14mm;
+      border-bottom: 3px solid #b00000;
+      gap: 14px;
     }
 
-    .address {
+    .info-block {
+      text-align: center;
+      flex: 1;
+    }
+
+    .info-label {
+      font-size: 12px;
       font-weight: bold;
+      color: #7a0000;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
     }
 
+    .info-value {
+      display: inline-block;
+      font-size: 22px;
+      font-weight: 800;
+      color: #7a0000;
+    }
 
-    .contact {
+    .info-value.website {
+      background: #fff;
+      border: 2px solid #7a0000;
+      border-radius: 6px;
+      padding: 4px 16px;
+    }
+
+    .info-divider {
+      width: 1px;
+      align-self: stretch;
+      background: rgba(122, 0, 0, 0.35);
+    }
+
+    .seal-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
       font-weight: bold;
-      font-size: 16px;
-      padding: 0px 4px;
-      border-radius: 4px;
+      padding: 6px 14mm;
+      margin: 0 -14mm 10px -14mm;
+      background: #fff5f5;
+      color: #7a0000;
     }
 
-    /* CONTENT */
+    .header-separator {
+      margin-top: 12px;
+      margin-bottom: 20px;
+    }
+
+    /* ===== CONTENT ===== */
     .content {
       display: flex;
       justify-content: space-between;
+      gap: 26px;
+      margin-top: 30px;
     }
 
     .left-details,
@@ -73,91 +150,60 @@
       grid-template-columns: 140px 10px auto;
       margin-bottom: 10px;
       align-items: center;
-      /* 🔥 THIS fixes Tamil alignment */
     }
-
 
     .label {
       font-weight: bold;
+      font-size: 19px !important;
     }
 
     .value {
-      line-height: 1.2;
+      line-height: 1.35;
+      font-size: 19px !important;
     }
 
     .tamil {
       line-height: 1.1;
     }
 
-    /* PHOTO */
+    /* ===== PHOTO ===== */
     .photo-box {
-      width: 250px;
-      height: 230px;
+      width: 270px;
+      height: 250px;
       margin-left: 10px;
-      margin-top: -14px;
+      margin-top: 4px;
       margin-bottom: 27px;
       border: 1px solid #000;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      /* 🔥 important */
     }
 
     .photo-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      /* fills box without distortion */
     }
 
-
-    /* HOROSCOPE */
+    /* ===== HOROSCOPE ===== */
     .jathagam-section {
       display: flex;
       justify-content: space-between;
-      margin-top: 24px;
+      margin-top: 36px;
     }
 
-
+    .jathagam-box {
+      width: 100%;
+      padding: 10px;
+    }
 
     .jathagam-title {
       text-align: center;
       font-weight: bold;
       font-size: 18px;
-      margin-bottom: 6px;
-    }
-
-    .jathagam-placeholder {
-      height: 240px;
-      border: 2px dashed #000;
-    }
-
-    /* FOOTER */
-    .footer {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 12px;
-    }
-
-    .header-separator {
-      margin-top: 1px;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #000;
-    }
-
-    /* HOROSCOPE SECTION */
-    .jathagam-section {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 24px;
-    }
-
-    .jathagam-box {
-      width: 50%;
-      /* border: 2px solid #000; */
-      padding: 10px;
-      /* box-sizing: border-box; */
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
     }
 
     .jathagam-image-box {
@@ -175,40 +221,37 @@
       object-fit: contain;
     }
 
-
-    .jathagam-title {
+    /* ===== TRUST LINE ===== */
+    .trust-banner {
+      margin-top: 22px;
+      border: 1px solid #d8a0a0;
+      background: #fffaf9;
+      border-radius: 6px;
+      padding: 8px 12px;
       text-align: center;
-      font-weight: bold;
-      font-size: 18px;
-      margin-bottom: 10px;
-      letter-spacing: 0.5px;
-    }
-
-    /* SOUTH INDIAN HOROSCOPE GRID */
-    .horoscope-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(4, 60px);
-      border: 2px solid #000;
-    }
-
-    .house {
-      border: 1px solid #000;
       font-size: 12px;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    .trust-banner b {
+      color: #b00000;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
       text-align: center;
-      padding: 4px;
-      line-height: 1.2;
+      font-size: 12px;
+      line-height: 1.35;
+      margin-top: 10px;
+      padding-top: 6px;
+      padding-bottom: 0;
     }
 
-    /* Center box (empty) */
-    .house.center {
-      grid-column: 2 / span 2;
-      grid-row: 2 / span 2;
-      border: none;
-    }
-
-    .contact-details {
-      font-weight: 400;
+    .footer-website {
+      font-size: 14px;
+      font-weight: bold;
+      color: #d62828;
     }
   </style>
 </head>
@@ -216,23 +259,34 @@
 <body>
   <div class="page">
 
-    <div class="header">
-      <div class="title">Vaniyar Chettiyar Kalyana Malai</div>
-      <div class="sub-title">(வன்னியர் செட்டியார் கல்யாண மலை)</div>
-      <div class="sub-header">
-        <div class="address">
-          Vaniyar Sangam, Kovilpatti,<br>
-          Thoothukudi District - 628501
-        </div>
-        <div class="contact">
-          <div class="contact-label">Contact Number :</div>
-          <div class="contact-details">8903960261, 9843011386</div>
-        </div>
+    <div class="brand-band">
+      <div class="brand-logo-wrap">
+        <img class="brand-logo" src="https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/logo.jpg"
+          alt="Vaniya chettiyar Kalyana Malai Logo" />
       </div>
-
-      <div class="header-separator"></div>
+      <div class="brand-text">
+        <div class="title">Vaniya Chettiyar Kalyana Malai</div>
+        <div class="sub-title">(வாணியச் செட்டியார் கல்யாண மாலை)</div>
+      </div>
     </div>
 
+    <div class="info-bar">
+      <div class="info-block">
+        <div class="info-label">Browse &amp; Register Free at</div>
+        <div class="info-value website">{{websiteUrl}}</div>
+      </div>
+      <div class="info-divider"></div>
+      <div class="info-block">
+        <div class="info-label">Whatsapp Number</div>
+        <div class="info-value">{{companyContact}}</div>
+      </div>
+    </div>
+
+    <div class="seal-row">
+      <span>Sl. No. {{slNo}}</span>
+      <span>Registered: {{regDate}}</span>
+      <span>ID: {{matrimonyId}}</span>
+    </div>
 
     <div class="content">
       <!-- LEFT -->
@@ -240,87 +294,87 @@
         <div class="row">
           <div class="label">Name</div>
           <div>:</div>
-          <div>{{name}}</div>
+          <div class="value">{{name}}</div>
         </div>
         <div class="row">
           <div class="label">Matrimony Id</div>
           <div>:</div>
-          <div>{{matrimonyId}}</div>
+          <div class="value">{{matrimonyId}}</div>
         </div>
         <div class="row">
           <div class="label">Gender</div>
           <div>:</div>
-          <div>{{gender}}</div>
+          <div class="value">{{gender}}</div>
         </div>
         <div class="row">
           <div class="label">Date of Birth</div>
           <div>:</div>
-          <div>{{dob}}</div>
+          <div class="value">{{dob}}</div>
         </div>
         <div class="row">
           <div class="label">Age</div>
           <div>:</div>
-          <div>{{age}}</div>
+          <div class="value">{{age}}</div>
         </div>
         <div class="row">
           <div class="label">Religion</div>
           <div>:</div>
-          <div>{{religion}}</div>
+          <div class="value">{{religion}}</div>
         </div>
         <div class="row">
           <div class="label">Marital Status</div>
           <div>:</div>
-          <div>{{maritalStatus}}</div>
+          <div class="value">{{maritalStatus}}</div>
         </div>
         <div class="row">
           <div class="label">Native Place</div>
           <div>:</div>
-          <div>{{nativePlace}}</div>
+          <div class="value">{{nativePlace}}</div>
         </div>
         <div class="row">
           <div class="label">District</div>
           <div>:</div>
-          <div>{{district}}</div>
+          <div class="value">{{district}}</div>
         </div>
         <div class="row">
           <div class="label">Education</div>
           <div>:</div>
-          <div>{{education}}</div>
+          <div class="value">{{education}}</div>
         </div>
         <div class="row">
           <div class="label">Profession</div>
           <div>:</div>
-          <div>{{profession}}</div>
+          <div class="value">{{profession}}</div>
         </div>
         <div class="row">
           <div class="label">Company Name</div>
           <div>:</div>
-          <div>{{company}}</div>
+          <div class="value">{{company}}</div>
         </div>
         <div class="row">
           <div class="label">Salary</div>
           <div>:</div>
-          <div>{{salary}}</div>
+          <div class="value">{{salary}}</div>
         </div>
         <div class="row">
           <div class="label">Work Location</div>
           <div>:</div>
-          <div>{{workLocation}}</div>
+          <div class="value">{{workLocation}}</div>
         </div>
         <div class="row">
           <div class="label">Height</div>
           <div>:</div>
-          <div>{{height}}</div>
+          <div class="value">{{height}}</div>
         </div>
         <div class="row">
           <div class="label">Weight</div>
           <div>:</div>
-          <div>{{weight}}</div>
+          <div class="value">{{weight}}</div>
         </div>
         <div class="row">
           <div class="label">Contact Details</div>
           <div>:</div>
-          <div>{{contact}}</div>
+          <div class="value">{{contact}}</div>
         </div>
       </div>
 
@@ -330,17 +384,15 @@
           <img src="{{photoUrl}}" alt="Profile Photo" class="photo-img" />
         </div>
 
-
-
         <div class="row">
-          <div class="label">Father’s Name</div>
+          <div class="label">Father's Name</div>
           <div>:</div>
-          <div>{{fatherName}}</div>
+          <div class="value">{{fatherName}}</div>
         </div>
         <div class="row">
-          <div class="label">Mother’s Name</div>
+          <div class="label">Mother's Name</div>
           <div>:</div>
-          <div>{{motherName}}</div>
+          <div class="value">{{motherName}}</div>
         </div>
         <div class="row">
           <div class="label">Raasi</div>
@@ -380,26 +432,28 @@
         <div class="row">
           <div class="label">Expectation</div>
           <div>:</div>
-          <div>{{expectation}}</div>
+          <div class="value">{{expectation}}</div>
         </div>
-
       </div>
     </div>
+
     <div class="jathagam-section">
       <div class="jathagam-box" style="width: 100%;">
         <div class="jathagam-title">Rasi and Amsam Chart</div>
-
         <div class="jathagam-image-box">
           <img src="{{jathagamImageUrl}}" alt="Jathagam Image" />
         </div>
       </div>
     </div>
 
-
-
+    <div class="trust-banner">
+      <b>{{websiteUrl}}</b> is our only official source — please verify every profile there before proceeding.<br />
+      We are not responsible for details shared outside this platform.
+    </div>
 
     <div class="footer">
-      Generated by Vaniyar Chettiyar Kalyana Malai
+      Generated by <b>Vaniya Chettiyar Kalyana Malai</b><br>
+      <div class="footer-website">{{websiteUrl}}</div>
     </div>
 
   </div>

@@ -183,7 +183,7 @@ const getOneProfileDetails = async (req) => {
   if (!id) return TE('Id is required');
   console.log('id', id);
   const [matchErr, matachData] = await to(Profile.findOne({
-    attributes: ['id', 'matrimonyId', 'name', 'gender', 'mobileNumber', 'dob', 'martialStatus', 'religion', 'nativePlace', 'districtId'],
+    attributes: ['id', 'matrimonyId', 'name', 'gender', 'mobileNumber', 'dob', 'martialStatus', 'religion', 'nativePlace', 'districtId', 'createdAt'],
     where: {
       id: id,
       isDeleted: false,
@@ -648,7 +648,7 @@ const downloadProfile = async (req) => {
   }
   else if (!getProfileCardData.profileCardUrl) {
     const input = {
-      user: {
+      params: {
         id: req.params.id
       }
     };
@@ -663,9 +663,8 @@ const downloadProfile = async (req) => {
       userData?.parentDetails?.[0]?.dataValues?.contactPersonName +
       ' (' +
       userData?.parentDetails?.[0]?.dataValues?.contactPersonType +
-      ')\n' +
+      ')<br>' +
       userData?.parentDetails?.[0]?.dataValues?.contactPersonNumber;
-
 
     console.log("userData?.dob", userData?.dob);
     const readableDate = userData?.dob?.toLocaleDateString("en-IN", {
@@ -673,8 +672,21 @@ const downloadProfile = async (req) => {
       month: "2-digit",
       year: "numeric"
     });
-    console.log("personal details", userData?.personalDetails?.[0]?.dataValues);
+    const readableRegDate = userData?.createdAt?.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+
+    // Constants — not per-profile data
+    const COMPANY_CONTACT = '8903960263';
+    const WEBSITE_URL = 'vaniyachettiyarkalyanamalai.com';
+    const LOGO_URL = 'https://vc-matrimony.s3.us-east-1.amazonaws.com/assets/logo.png'; // TODO: confirm actual hosted logo path
+    console.log("profile image", userData.profileImages?.[0]?.dataValues.profileUrl);
+    console.log("jathagam image", userData?.zodiacDetails?.[0]?.dataValues.jathgamImage);
     particularUserDetail = {
+      slNo: userData.id,
+      regDate: readableRegDate ?? '-',
       name: userData.name,
       matrimonyId: userData.matrimonyId,
       gender: userData.gender,
@@ -692,6 +704,9 @@ const downloadProfile = async (req) => {
       height: userData?.personalDetails?.[0]?.dataValues?.height?.dataValues?.heightName ?? '-',
       weight: userData?.personalDetails?.[0]?.dataValues?.weight?.dataValues?.weightName ?? '-',
       contact: contactDetails ?? '-',
+      companyContact: COMPANY_CONTACT,
+      websiteUrl: WEBSITE_URL,
+      logoUrl: LOGO_URL,
       fatherName: userData?.parentDetails?.[0]?.dataValues?.fatherName ?? '-',
       motherName: userData?.parentDetails?.[0]?.dataValues?.motherName ?? '-',
       raasi: userData?.zodiacDetails?.[0]?.zodiac?.dataValues?.zodiacTamil ?? '-',
@@ -702,11 +717,12 @@ const downloadProfile = async (req) => {
       color: userData?.personalDetails?.[0]?.dataValues?.skinTone ?? '-',
       assets: userData?.personalDetails?.[0]?.dataValues?.asset ?? '-',
       expectation: userData?.personalDetails?.[0]?.dataValues?.Interest ?? '-',
-      photoUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${userData.matrimonyId}.jpg`,
-      jathagamImageUrl: `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/jathagamimage/${userData.matrimonyId}.jpg`
+      photoUrl: userData.profileImages?.[0]?.dataValues.profileUrl,
+      jathagamImageUrl: userData?.zodiacDetails?.[0]?.dataValues.jathgamImage
     };
     console.log("particularUserDetail", particularUserDetail);
-    const bufferData = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail, path.join(__dirname, `profile_${userData.matrimonyId}.png`));
+    const bufferData = await generateProfileImage(path.join(__dirname, 'profileCard.html'), particularUserDetail);
+    console.log("bufferData", bufferData);
     const s3Url = await uploadImageBufferToS3(
       bufferData,
       `profile/profilecard/${userData.matrimonyId}.png`
